@@ -47,7 +47,7 @@ class _UrgentBanner extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Container(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -60,12 +60,12 @@ class _UrgentBanner extends StatelessWidget {
           border: Border.all(
             color: AppColors.statusCritical.withValues(alpha: 0.28),
           ),
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.18),
               offset: const Offset(0, 10),
-              blurRadius: 24,
+              blurRadius: 20,
             ),
           ],
         ),
@@ -73,19 +73,19 @@ class _UrgentBanner extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 46,
-              height: 46,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: AppColors.statusCritical.withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(
                 LucideIcons.alertTriangle,
                 color: AppColors.statusCritical,
-                size: 20,
+                size: 18,
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,8 +104,8 @@ class _UrgentBanner extends StatelessWidget {
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
+                          horizontal: 8,
+                          vertical: 4,
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.statusCritical.withValues(
@@ -117,31 +117,32 @@ class _UrgentBanner extends StatelessWidget {
                           '3 OUTLETS',
                           style: TextStyle(
                             color: AppColors.statusCritical,
-                            fontSize: 10,
+                            fontSize: 9,
                             fontWeight: FontWeight.w800,
-                            letterSpacing: 0.8,
+                            letterSpacing: 0.6,
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
                     '12 products are expiring within 7 days across 3 outlets.',
                     style: TextStyle(
                       color: AppColors.statusCritical.withValues(alpha: 0.8),
-                      fontSize: 12,
-                      height: 1.4,
+                      fontSize: 11,
+                      height: 1.3,
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  const Row(
+                  const SizedBox(height: 10),
+                  const Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
                     children: [
                       _BannerMetric(
                         icon: LucideIcons.alertTriangle,
                         label: '12 critical',
                       ),
-                      SizedBox(width: 8),
                       _BannerMetric(
                         icon: LucideIcons.clock,
                         label: '7-day window',
@@ -167,21 +168,21 @@ class _BannerMetric extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 13, color: AppColors.statusCritical),
-          const SizedBox(width: 6),
+          Icon(icon, size: 12, color: AppColors.statusCritical),
+          const SizedBox(width: 5),
           Text(
             label,
             style: const TextStyle(
               color: AppColors.textPrimary,
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -399,20 +400,20 @@ class _ExpiringItemCard extends StatelessWidget {
     final statusLabel = daysLeft <= 7 ? 'Critical' : 'Warning';
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [AppColors.cardElevated, AppColors.cardDark],
         ),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: statusColor.withValues(alpha: 0.16)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.16),
             offset: const Offset(0, 10),
-            blurRadius: 24,
+            blurRadius: 18,
           ),
         ],
       ),
@@ -420,15 +421,15 @@ class _ExpiringItemCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 44,
-            height: 44,
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
               color: statusColor.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(LucideIcons.package, color: statusColor, size: 20),
+            child: Icon(LucideIcons.package, color: statusColor, size: 18),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -441,14 +442,16 @@ class _ExpiringItemCard extends StatelessWidget {
                         style: TextStyle(
                           color: AppColors.textPrimary,
                           fontWeight: FontWeight.w700,
-                          fontSize: 15,
+                          fontSize: 14,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
+                        horizontal: 8,
+                        vertical: 4,
                       ),
                       decoration: BoxDecoration(
                         color: statusColor.withValues(alpha: 0.12),
@@ -458,35 +461,37 @@ class _ExpiringItemCard extends StatelessWidget {
                         statusLabel,
                         style: TextStyle(
                           color: statusColor,
-                          fontSize: 10,
+                          fontSize: 9,
                           fontWeight: FontWeight.w800,
-                          letterSpacing: 0.5,
+                          letterSpacing: 0.4,
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 Row(
                   children: [
                     Icon(
                       LucideIcons.store,
-                      size: 12,
+                      size: 11,
                       color: AppColors.textPrimary.withValues(alpha: 0.5),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 5),
                     const Expanded(
                       child: Text(
                         'City Pharmacy',
                         style: TextStyle(
                           color: AppColors.textSecondary,
-                          fontSize: 12,
+                          fontSize: 11,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 Row(
                   children: [
                     Expanded(
@@ -524,10 +529,10 @@ class _InfoPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
       decoration: BoxDecoration(
         color: AppColors.backgroundDark,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Column(
@@ -537,17 +542,17 @@ class _InfoPill extends StatelessWidget {
             label.toUpperCase(),
             style: TextStyle(
               color: AppColors.textPrimary.withValues(alpha: 0.42),
-              fontSize: 9,
+              fontSize: 8,
               fontWeight: FontWeight.w700,
-              letterSpacing: 0.6,
+              letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           Text(
             value,
             style: TextStyle(
               color: valueColor ?? AppColors.textPrimary,
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.w600,
             ),
             maxLines: 1,
