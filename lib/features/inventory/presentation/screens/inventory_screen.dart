@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../shared/data/product_repository.dart';
 import '../../../../shared/models/product_model.dart';
 import '../../../../shared/models/product_status.dart';
 
@@ -12,56 +13,17 @@ class InventoryScreen extends StatefulWidget {
 }
 
 class _InventoryScreenState extends State<InventoryScreen> {
-  // Mock Data using the ProductModel we created
-  final List<ProductModel> _products = [
-    ProductModel(
-      id: '1',
-      name: 'Amoxicillin 500mg',
-      batchNumber: 'AMX-2023-1',
-      quantity: 50,
-      expiryDate: DateTime.now().add(const Duration(days: 4)),
-      outletId: 'o1',
-      outletName: 'City Pharmacy',
-    ),
-    ProductModel(
-      id: '2',
-      name: 'Ibuprofen 200mg',
-      batchNumber: 'IBU-2023-2',
-      quantity: 120,
-      expiryDate: DateTime.now().add(const Duration(days: 25)),
-      outletId: 'o2',
-      outletName: 'Downtown Clinic',
-    ),
-    ProductModel(
-      id: '3',
-      name: 'Paracetamol 500mg',
-      batchNumber: 'PAR-2023-3',
-      quantity: 300,
-      expiryDate: DateTime.now().add(const Duration(days: 180)),
-      outletId: 'o1',
-      outletName: 'City Pharmacy',
-    ),
-    ProductModel(
-      id: '4',
-      name: 'Ciprofloxacin 250mg',
-      batchNumber: 'CIP-2023-4',
-      quantity: 40,
-      expiryDate: DateTime.now().subtract(const Duration(days: 2)), // Expired
-      outletId: 'o3',
-      outletName: 'Uptown Meds',
-    ),
-  ];
+  final ProductRepository _productRepository = const ProductRepository();
+  late final Future<List<ProductModel>> _productsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _productsFuture = _productRepository.fetchProducts();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final urgentCount = _products
-        .where(
-          (product) =>
-              product.status == ProductStatus.critical ||
-              product.status == ProductStatus.expired,
-        )
-        .length;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Inventory'),
@@ -72,25 +34,47 @@ class _InventoryScreenState extends State<InventoryScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          const _SearchBar(),
-          const _FilterChips(),
-          _InventorySummary(
-            totalCount: _products.length,
-            urgentCount: urgentCount,
-          ),
-          Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              itemCount: _products.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                return _ProductCard(product: _products[index]);
-              },
-            ),
-          ),
-        ],
+      body: FutureBuilder<List<ProductModel>>(
+        future: _productsFuture,
+        builder: (context, snapshot) {
+          final products = snapshot.data ?? const <ProductModel>[];
+          final urgentCount = products
+              .where(
+                (product) =>
+                    product.status == ProductStatus.critical ||
+                    product.status == ProductStatus.expired,
+              )
+              .length;
+
+          return Column(
+            children: [
+              const _SearchBar(),
+              const _FilterChips(),
+              _InventorySummary(
+                totalCount: products.length,
+                urgentCount: urgentCount,
+              ),
+              Expanded(
+                child: snapshot.connectionState == ConnectionState.waiting &&
+                        products.isEmpty
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primaryTeal,
+                        ),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                        itemCount: products.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          return _ProductCard(product: products[index]);
+                        },
+                      ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

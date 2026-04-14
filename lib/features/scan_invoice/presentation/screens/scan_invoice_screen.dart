@@ -509,32 +509,34 @@ class _ScanInvoiceScreenState extends State<ScanInvoiceScreen> {
             const SizedBox(height: 16),
             Row(
               children: [
-                SizedBox(
-                  height: 44,
-                  child: ElevatedButton.icon(
-                    onPressed: _isOpeningCamera ? null : _openCamera,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryTeal,
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                Expanded(
+                  child: SizedBox(
+                    height: 44,
+                    child: ElevatedButton.icon(
+                      onPressed: _isOpeningCamera ? null : _openCamera,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryTeal,
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
-                    ),
-                    icon:
-                        _isOpeningCamera
-                            ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.black,
-                              ),
-                            )
-                            : const Icon(LucideIcons.scanLine, size: 18),
-                    label: Text(
-                      _isOpeningCamera ? 'Opening...' : 'Scan',
-                      style: const TextStyle(fontWeight: FontWeight.w700),
+                      icon:
+                          _isOpeningCamera
+                              ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.black,
+                                ),
+                              )
+                              : const Icon(LucideIcons.scanLine, size: 18),
+                      label: Text(
+                        _isOpeningCamera ? 'Opening...' : 'Scan',
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
                     ),
                   ),
                 ),
@@ -576,28 +578,56 @@ class _ScanInvoiceScreenState extends State<ScanInvoiceScreen> {
             ),
             if (_capturedImage != null) ...[
               const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                height: 42,
-                child: OutlinedButton.icon(
-                  onPressed:
-                      _isProcessingImage ? null : _discardScannedImage,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.redAccent,
-                    side: BorderSide(
-                      color: Colors.redAccent.withValues(alpha: 0.22),
-                    ),
-                    backgroundColor: AppColors.cardDark,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 42,
+                      child: OutlinedButton(
+                        onPressed: _isProcessingImage ? null : () {},
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.statusSafe,
+                          side: BorderSide(
+                            color: AppColors.statusSafe.withValues(alpha: 0.22),
+                          ),
+                          backgroundColor: AppColors.cardDark,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Import',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
                     ),
                   ),
-                  icon: const Icon(LucideIcons.trash2, size: 18),
-                  label: const Text(
-                    'Discard Scanned Image',
-                    style: TextStyle(fontWeight: FontWeight.w600),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SizedBox(
+                      height: 42,
+                      child: OutlinedButton.icon(
+                        onPressed:
+                            _isProcessingImage ? null : _discardScannedImage,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.redAccent,
+                          side: BorderSide(
+                            color: Colors.redAccent.withValues(alpha: 0.22),
+                          ),
+                          backgroundColor: AppColors.cardDark,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        icon: const Icon(LucideIcons.trash2, size: 18),
+                        label: const Text(
+                          'Discard',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ],
             const SizedBox(height: 16),

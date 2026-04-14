@@ -1,10 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../shared/data/product_repository.dart';
+import '../../../../shared/models/product_model.dart';
+import '../../../../shared/models/product_status.dart';
 import '../../../../shared/widgets/neumorphic_card.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  final ProductRepository _productRepository = const ProductRepository();
+  late final Future<List<ProductModel>> _productsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _productsFuture = _productRepository.fetchProducts();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,32 +32,52 @@ class DashboardScreen extends StatelessWidget {
           IconButton(icon: const Icon(LucideIcons.user), onPressed: () {}),
         ],
       ),
-      body: Column(
-        children: [
-          const SizedBox(height: 8),
-          const _UrgentBanner(),
-          const SizedBox(height: 16),
-          const _GridStats(),
-          const SizedBox(height: 10),
-          const _DashboardSectionHeader(),
-          Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
-              itemCount: 5,
-              separatorBuilder: (context, index) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                return _ExpiringItemCard(index: index);
-              },
-            ),
-          ),
-        ],
+      body: FutureBuilder<List<ProductModel>>(
+        future: _productsFuture,
+        builder: (context, snapshot) {
+          final products = snapshot.data ?? const <ProductModel>[];
+          final metrics = _DashboardMetrics.fromProducts(products);
+
+          return Column(
+            children: [
+              const SizedBox(height: 8),
+              _UrgentBanner(metrics: metrics),
+              const SizedBox(height: 16),
+              _GridStats(metrics: metrics),
+              const SizedBox(height: 10),
+              _DashboardSectionHeader(thisWeekCount: metrics.thisWeekCount),
+              Expanded(
+                child: snapshot.connectionState == ConnectionState.waiting &&
+                        products.isEmpty
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primaryTeal,
+                        ),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(16, 6, 16, 16),
+                        itemCount: metrics.expiringSoonProducts.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          return _ExpiringItemCard(
+                            product: metrics.expiringSoonProducts[index],
+                          );
+                        },
+                      ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 }
 
 class _UrgentBanner extends StatelessWidget {
-  const _UrgentBanner();
+  final _DashboardMetrics metrics;
+
+  const _UrgentBanner({required this.metrics});
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +126,7 @@ class _UrgentBanner extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -103,7 +140,9 @@ class _UrgentBanner extends StatelessWidget {
                       ),
                       SizedBox(height: 6),
                       Text(
-                        '12 products need attention across 3 outlets.',
+                        '${metrics.urgentCount} products need attention across '
+                        '${metrics.urgentOutletCount} '
+                        'outlet${metrics.urgentOutletCount == 1 ? '' : 's'}.',
                         style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 12,
@@ -128,8 +167,9 @@ class _UrgentBanner extends StatelessWidget {
                       color: AppColors.statusCritical.withValues(alpha: 0.12),
                     ),
                   ),
-                  child: const Text(
-                    '3 OUTLETS',
+                  child: Text(
+                    '${metrics.urgentOutletCount} '
+                    'OUTLET${metrics.urgentOutletCount == 1 ? '' : 'S'}',
                     style: TextStyle(
                       color: AppColors.statusCritical,
                       fontSize: 9,
@@ -141,14 +181,14 @@ class _UrgentBanner extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            const Row(
+            Row(
               children: [
                 Expanded(
                   child: _BannerMetric(
                     icon: LucideIcons.alertTriangle,
                     accentColor: AppColors.statusCritical,
                     title: 'Critical Items',
-                    value: '12 critical',
+                    value: '${metrics.criticalCount} critical',
                   ),
                 ),
                 SizedBox(width: 10),
@@ -157,7 +197,7 @@ class _UrgentBanner extends StatelessWidget {
                     icon: LucideIcons.clock,
                     accentColor: AppColors.statusWarning,
                     title: 'Remaining Days',
-                    value: '7 days',
+                    value: metrics.remainingDaysLabel,
                   ),
                 ),
               ],
@@ -239,7 +279,9 @@ class _BannerMetric extends StatelessWidget {
 }
 
 class _GridStats extends StatelessWidget {
-  const _GridStats();
+  final _DashboardMetrics metrics;
+
+  const _GridStats({required this.metrics});
 
   @override
   Widget build(BuildContext context) {
@@ -252,14 +294,14 @@ class _GridStats extends StatelessWidget {
               children: [
                 _StatCard(
                   title: 'Total Items',
-                  value: '1,248',
+                  value: _formatCount(metrics.totalQuantity),
                   icon: LucideIcons.package,
                   iconColor: AppColors.primaryTeal,
                 ),
                 const SizedBox(height: 10),
                 _StatCard(
                   title: 'Critical',
-                  value: '12',
+                  value: metrics.criticalCount.toString(),
                   icon: LucideIcons.alertTriangle,
                   iconColor: AppColors.statusCritical,
                 ),
@@ -272,14 +314,14 @@ class _GridStats extends StatelessWidget {
               children: [
                 _StatCard(
                   title: 'Outlets',
-                  value: '8',
+                  value: metrics.outletCount.toString(),
                   icon: LucideIcons.store,
                   iconColor: AppColors.primaryTeal,
                 ),
                 const SizedBox(height: 10),
                 _StatCard(
                   title: 'Delivery',
-                  value: '45',
+                  value: '0',
                   icon: LucideIcons.truck,
                   iconColor: AppColors.primaryTeal,
                 ),
@@ -384,7 +426,9 @@ class _StatCard extends StatelessWidget {
 }
 
 class _DashboardSectionHeader extends StatelessWidget {
-  const _DashboardSectionHeader();
+  final int thisWeekCount;
+
+  const _DashboardSectionHeader({required this.thisWeekCount});
 
   @override
   Widget build(BuildContext context) {
@@ -392,7 +436,7 @@ class _DashboardSectionHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 2, 16, 6),
       child: Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -406,7 +450,9 @@ class _DashboardSectionHeader extends StatelessWidget {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  '5 batches need attention this week',
+                  thisWeekCount == 0
+                      ? 'No batches need attention this week'
+                      : '$thisWeekCount batch${thisWeekCount == 1 ? '' : 'es'} need attention this week',
                   style: TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
@@ -437,17 +483,15 @@ class _DashboardSectionHeader extends StatelessWidget {
 }
 
 class _ExpiringItemCard extends StatelessWidget {
-  final int index;
+  final ProductModel product;
 
-  const _ExpiringItemCard({required this.index});
+  const _ExpiringItemCard({required this.product});
 
   @override
   Widget build(BuildContext context) {
-    final daysLeft = (index + 1) * 2;
-    final statusColor = daysLeft <= 7
-        ? AppColors.statusCritical
-        : AppColors.statusWarning;
-    final statusLabel = daysLeft <= 7 ? 'Critical' : 'Warning';
+    final daysLeft = product.daysUntilExpiry;
+    final statusColor = _statusColorFor(product.status);
+    final statusLabel = product.status.displayName;
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -486,9 +530,9 @@ class _ExpiringItemCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Amoxicillin 500mg',
+                        product.name,
                         style: TextStyle(
                           color: AppColors.textPrimary,
                           fontWeight: FontWeight.w700,
@@ -528,9 +572,9 @@ class _ExpiringItemCard extends StatelessWidget {
                       color: AppColors.textPrimary.withValues(alpha: 0.5),
                     ),
                     const SizedBox(width: 5),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'City Pharmacy',
+                        product.outletName,
                         style: TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 11,
@@ -547,14 +591,14 @@ class _ExpiringItemCard extends StatelessWidget {
                     Expanded(
                       child: _InfoPill(
                         label: 'Batch',
-                        value: 'AMX-2023-$index',
+                        value: product.batchNumber,
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: _InfoPill(
                         label: 'Window',
-                        value: '$daysLeft days',
+                        value: _formatWindowText(daysLeft),
                         valueColor: statusColor,
                       ),
                     ),
@@ -567,6 +611,116 @@ class _ExpiringItemCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _DashboardMetrics {
+  final int totalQuantity;
+  final int outletCount;
+  final int urgentCount;
+  final int criticalCount;
+  final int thisWeekCount;
+  final int urgentOutletCount;
+  final String remainingDaysLabel;
+  final List<ProductModel> expiringSoonProducts;
+
+  const _DashboardMetrics({
+    required this.totalQuantity,
+    required this.outletCount,
+    required this.urgentCount,
+    required this.criticalCount,
+    required this.thisWeekCount,
+    required this.urgentOutletCount,
+    required this.remainingDaysLabel,
+    required this.expiringSoonProducts,
+  });
+
+  factory _DashboardMetrics.fromProducts(List<ProductModel> products) {
+    final sortedProducts = [...products]
+      ..sort((a, b) => a.daysUntilExpiry.compareTo(b.daysUntilExpiry));
+
+    final attentionProducts = sortedProducts
+        .where((product) => product.status != ProductStatus.safe)
+        .toList();
+    final urgentProducts = sortedProducts
+        .where(
+          (product) =>
+              product.status == ProductStatus.critical ||
+              product.status == ProductStatus.expired,
+        )
+        .toList();
+    final criticalProducts = sortedProducts
+        .where((product) => product.status == ProductStatus.critical)
+        .toList();
+    final thisWeekProducts = sortedProducts
+        .where((product) => product.daysUntilExpiry <= 7)
+        .toList();
+
+    return _DashboardMetrics(
+      totalQuantity: products.fold<int>(
+        0,
+        (sum, product) => sum + product.quantity,
+      ),
+      outletCount: products.map((product) => product.outletId).toSet().length,
+      urgentCount: urgentProducts.length,
+      criticalCount: criticalProducts.length,
+      thisWeekCount: thisWeekProducts.length,
+      urgentOutletCount:
+          urgentProducts.map((product) => product.outletId).toSet().length,
+      remainingDaysLabel: _buildRemainingDaysLabel(attentionProducts),
+      expiringSoonProducts: attentionProducts.take(5).toList(),
+    );
+  }
+}
+
+Color _statusColorFor(ProductStatus status) {
+  switch (status) {
+    case ProductStatus.safe:
+      return AppColors.statusSafe;
+    case ProductStatus.warning:
+      return AppColors.statusWarning;
+    case ProductStatus.critical:
+    case ProductStatus.expired:
+      return AppColors.statusCritical;
+  }
+}
+
+String _buildRemainingDaysLabel(List<ProductModel> products) {
+  final nextUpcoming = products
+      .where((product) => product.daysUntilExpiry >= 0)
+      .toList()
+    ..sort((a, b) => a.daysUntilExpiry.compareTo(b.daysUntilExpiry));
+
+  if (nextUpcoming.isNotEmpty) {
+    return _formatWindowText(nextUpcoming.first.daysUntilExpiry);
+  }
+
+  return products.isEmpty ? 'No risk' : 'Overdue';
+}
+
+String _formatWindowText(int daysLeft) {
+  if (daysLeft < 0) {
+    final overdueDays = daysLeft.abs();
+    return '$overdueDays day${overdueDays == 1 ? '' : 's'} overdue';
+  }
+  if (daysLeft == 0) {
+    return 'Today';
+  }
+  return '$daysLeft day${daysLeft == 1 ? '' : 's'}';
+}
+
+String _formatCount(int value) {
+  final digits = value.toString();
+  final buffer = StringBuffer();
+
+  for (var i = 0; i < digits.length; i++) {
+    final reverseIndex = digits.length - i;
+    buffer.write(digits[i]);
+    if (reverseIndex > 1 && reverseIndex % 3 == 1) {
+      buffer.write(',');
+    }
+  }
+
+  return buffer.toString();
 }
 
 class _InfoPill extends StatelessWidget {

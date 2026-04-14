@@ -19,6 +19,32 @@ class ProductModel {
     required this.outletName,
   });
 
+  factory ProductModel.fromMap(Map<String, dynamic> map) {
+    final rawExpiryDate = map['expiry_date'] ?? map['expiryDate'];
+
+    return ProductModel(
+      id: (map['id'] ?? '').toString(),
+      name: (map['name'] ?? '').toString(),
+      batchNumber: (map['batch_number'] ?? map['batchNumber'] ?? '').toString(),
+      quantity: _readInt(map['quantity']),
+      expiryDate: _readDateTime(rawExpiryDate),
+      outletId: (map['outlet_id'] ?? map['outletId'] ?? '').toString(),
+      outletName: (map['outlet_name'] ?? map['outletName'] ?? '').toString(),
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'batch_number': batchNumber,
+      'quantity': quantity,
+      'expiry_date': expiryDate.toIso8601String(),
+      'outlet_id': outletId,
+      'outlet_name': outletName,
+    };
+  }
+
   /// Calculates the exact number of days until the product expires.
   int get daysUntilExpiry {
     final now = DateTime.now();
@@ -34,5 +60,19 @@ class ProductModel {
     if (days <= 7) return ProductStatus.critical;
     if (days <= 30) return ProductStatus.warning;
     return ProductStatus.safe;
+  }
+
+  static int _readInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  static DateTime _readDateTime(dynamic value) {
+    if (value is DateTime) return value;
+    if (value is String && value.isNotEmpty) {
+      return DateTime.tryParse(value) ?? DateTime.now();
+    }
+    return DateTime.now();
   }
 }
