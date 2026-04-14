@@ -215,9 +215,10 @@ class _ScanInvoiceScreenState extends State<ScanInvoiceScreen> {
     try {
       if (Platform.isAndroid) {
         final result = await _documentScanner.scanDocument();
-        if (!mounted || result.images.isEmpty) return;
+        final scannedImages = result.images;
+        if (!mounted || scannedImages == null || scannedImages.isEmpty) return;
 
-        final scannedImagePath = result.images.first;
+        final scannedImagePath = scannedImages.first;
         if (scannedImagePath.isEmpty) return;
 
         await _setSelectedImage(XFile(scannedImagePath));
