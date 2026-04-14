@@ -328,6 +328,26 @@ class _GridStats extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              children: [
+                _StatCard(
+                  title: 'Urgent',
+                  value: metrics.urgentCount.toString(),
+                  icon: LucideIcons.zap,
+                  iconColor: AppColors.statusWarning,
+                ),
+                const SizedBox(height: 10),
+                _StatCard(
+                  title: 'This Week',
+                  value: metrics.thisWeekCount.toString(),
+                  icon: LucideIcons.clock,
+                  iconColor: AppColors.statusWarning,
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
