@@ -284,6 +284,16 @@ class _ScanInvoiceScreenState extends State<ScanInvoiceScreen> {
     }
   }
 
+  void _discardScannedImage() {
+    setState(() {
+      _capturedImage = null;
+      _invoiceCaptureSummary = null;
+      _recognizedText = null;
+      _recognitionError = null;
+      _isProcessingImage = false;
+    });
+  }
+
   @override
   void dispose() {
     _documentScanner.close();
@@ -564,81 +574,29 @@ class _ScanInvoiceScreenState extends State<ScanInvoiceScreen> {
                 ),
               ],
             ),
-            if (_invoiceCaptureSummary != null &&
-                !_isProcessingImage &&
-                _recognitionError == null) ...[
-              const SizedBox(height: 16),
-              NeumorphicCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryTeal.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            LucideIcons.badgeCheck,
-                            color: AppColors.primaryTeal,
-                            size: 18,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Captured Invoice Rows',
-                                style: TextStyle(
-                                  color: AppColors.textPrimary,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              SizedBox(height: 2),
-                              Text(
-                                'Only SI no., SI date, and customer name are kept.',
-                                style: TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+            if (_capturedImage != null) ...[
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                height: 42,
+                child: OutlinedButton.icon(
+                  onPressed:
+                      _isProcessingImage ? null : _discardScannedImage,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.redAccent,
+                    side: BorderSide(
+                      color: Colors.redAccent.withValues(alpha: 0.22),
                     ),
-                    const SizedBox(height: 14),
-                    if (_invoiceCaptureSummary!.entries.isEmpty)
-                      const Text(
-                        'Text was captured, but no invoice rows matched the SI format yet.',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                          height: 1.4,
-                        ),
-                      )
-                    else
-                      Column(
-                        children: [
-                          for (var i = 0;
-                              i < _invoiceCaptureSummary!.entries.length;
-                              i++) ...[
-                            _CapturedInvoiceEntryCard(
-                              index: i + 1,
-                              entry: _invoiceCaptureSummary!.entries[i],
-                            ),
-                            if (i != _invoiceCaptureSummary!.entries.length - 1)
-                              const SizedBox(height: 10),
-                          ],
-                        ],
-                      ),
-                  ],
+                    backgroundColor: AppColors.cardDark,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(LucideIcons.trash2, size: 18),
+                  label: const Text(
+                    'Discard Scanned Image',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
                 ),
               ),
             ],
@@ -739,127 +697,6 @@ class _CropFrameOverlay extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _CapturedInvoiceEntryCard extends StatelessWidget {
-  final int index;
-  final _InvoiceCaptureEntry entry;
-
-  const _CapturedInvoiceEntryCard({
-    required this.index,
-    required this.entry,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundDark,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryTeal.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  'ROW $index',
-                  style: const TextStyle(
-                    color: AppColors.primaryTeal,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.6,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _CapturedValueLine(
-            icon: LucideIcons.receipt,
-            label: 'SI No.',
-            value: entry.siNumber,
-          ),
-          const SizedBox(height: 8),
-          _CapturedValueLine(
-            icon: LucideIcons.calendarDays,
-            label: 'SI Date',
-            value: entry.siDate,
-          ),
-          const SizedBox(height: 8),
-          _CapturedValueLine(
-            icon: LucideIcons.user,
-            label: 'Customer Name',
-            value: entry.customerName,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CapturedValueLine extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-
-  const _CapturedValueLine({
-    required this.icon,
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(
-          icon,
-          size: 15,
-          color: AppColors.primaryTeal,
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: '$label: ',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                TextSpan(
-                  text: value,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    height: 1.35,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

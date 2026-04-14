@@ -47,7 +47,7 @@ class _UrgentBanner extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -73,8 +73,8 @@ class _UrgentBanner extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
                 color: AppColors.statusCritical.withValues(alpha: 0.14),
                 borderRadius: BorderRadius.circular(12),
@@ -82,10 +82,10 @@ class _UrgentBanner extends StatelessWidget {
               child: const Icon(
                 LucideIcons.alertTriangle,
                 color: AppColors.statusCritical,
-                size: 18,
+                size: 16,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -98,7 +98,7 @@ class _UrgentBanner extends StatelessWidget {
                           style: TextStyle(
                             color: AppColors.statusCritical,
                             fontWeight: FontWeight.w700,
-                            fontSize: 15,
+                            fontSize: 14,
                           ),
                         ),
                       ),
@@ -117,7 +117,7 @@ class _UrgentBanner extends StatelessWidget {
                           '3 OUTLETS',
                           style: TextStyle(
                             color: AppColors.statusCritical,
-                            fontSize: 9,
+                            fontSize: 8,
                             fontWeight: FontWeight.w800,
                             letterSpacing: 0.6,
                           ),
@@ -127,14 +127,14 @@ class _UrgentBanner extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    '12 products are expiring within 7 days across 3 outlets.',
+                    '12 products need attention across 3 outlets.',
                     style: TextStyle(
                       color: AppColors.statusCritical.withValues(alpha: 0.8),
-                      fontSize: 11,
+                      fontSize: 10,
                       height: 1.3,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   const Wrap(
                     spacing: 8,
                     runSpacing: 8,
@@ -142,10 +142,6 @@ class _UrgentBanner extends StatelessWidget {
                       _BannerMetric(
                         icon: LucideIcons.alertTriangle,
                         label: '12 critical',
-                      ),
-                      _BannerMetric(
-                        icon: LucideIcons.clock,
-                        label: '7-day window',
                       ),
                     ],
                   ),
@@ -210,7 +206,7 @@ class _GridStats extends StatelessWidget {
                   icon: LucideIcons.package,
                   iconColor: AppColors.primaryTeal,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 _StatCard(
                   title: 'Critical',
                   value: '12',
@@ -220,7 +216,7 @@ class _GridStats extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               children: [
@@ -230,12 +226,12 @@ class _GridStats extends StatelessWidget {
                   icon: LucideIcons.store,
                   iconColor: AppColors.primaryTeal,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 _StatCard(
-                  title: 'Warning',
+                  title: 'Delivery',
                   value: '45',
-                  icon: LucideIcons.clock,
-                  iconColor: AppColors.statusWarning,
+                  icon: LucideIcons.truck,
+                  iconColor: AppColors.primaryTeal,
                 ),
               ],
             ),
@@ -264,7 +260,7 @@ class _StatCard extends StatelessWidget {
     return NeumorphicCard(
       padding: EdgeInsets.zero,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -278,22 +274,23 @@ class _StatCard extends StatelessWidget {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Row(
               children: [
                 Container(
-                  width: 32,
-                  height: 32,
+                  width: 28,
+                  height: 28,
                   decoration: BoxDecoration(
                     color: iconColor.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(9),
                   ),
-                  child: Icon(icon, size: 16, color: iconColor),
+                  child: Icon(icon, size: 14, color: iconColor),
                 ),
                 const Spacer(),
                 Container(
-                  width: 7,
-                  height: 7,
+                  width: 6,
+                  height: 6,
                   decoration: BoxDecoration(
                     color: iconColor.withValues(alpha: 0.9),
                     shape: BoxShape.circle,
@@ -301,19 +298,19 @@ class _StatCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Text(
               title.toUpperCase(),
               style: const TextStyle(
                 color: AppColors.textMuted,
-                fontSize: 9,
+                fontSize: 8,
                 fontWeight: FontWeight.bold,
-                letterSpacing: 0.9,
+                letterSpacing: 0.8,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
@@ -321,7 +318,7 @@ class _StatCard extends StatelessWidget {
                 value,
                 style: const TextStyle(
                   color: AppColors.textPrimary,
-                  fontSize: 22,
+                  fontSize: 18,
                   fontWeight: FontWeight.w800,
                 ),
               ),
