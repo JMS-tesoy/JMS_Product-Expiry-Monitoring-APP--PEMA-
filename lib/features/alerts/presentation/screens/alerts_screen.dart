@@ -93,9 +93,9 @@ class _AlertSummary extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _buildSummaryItem('Unread', '2', AppColors.primaryTeal),
-            Container(width: 1, height: 40, color: Colors.white.withOpacity(0.1)),
+            Container(width: 1, height: 40, color: Colors.white.withValues(alpha: 0.1)),
             _buildSummaryItem('Critical', '2', AppColors.statusCritical),
-            Container(width: 1, height: 40, color: Colors.white.withOpacity(0.1)),
+            Container(width: 1, height: 40, color: Colors.white.withValues(alpha: 0.1)),
             _buildSummaryItem('Warning', '1', AppColors.statusWarning),
           ],
         ),
@@ -177,10 +177,10 @@ class _AlertCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: alert.isRead ? AppColors.cardDark : color.withOpacity(0.05),
+        color: alert.isRead ? AppColors.cardDark : color.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: alert.isRead ? Colors.white.withOpacity(0.05) : color.withOpacity(0.3),
+          color: alert.isRead ? Colors.white.withValues(alpha: 0.05) : color.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -189,7 +189,7 @@ class _AlertCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(_getAlertIcon(), color: color, size: 20),
