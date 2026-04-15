@@ -6,18 +6,24 @@ import '../../../../shared/data/product_repository.dart';
 import '../../../../shared/models/product_model.dart';
 import '../../../../shared/models/product_status.dart';
 
+enum InventoryScreenFilter { all, critical, warning, safe }
+
 enum _InventoryFilter { all, critical, warning, safe }
 
 class InventoryScreen extends StatefulWidget {
   final String? initialOutletId;
   final String? initialOutletName;
   final String? initialOutletFilterName;
+  final InventoryScreenFilter initialFilter;
+  final int? expiringWithinDays;
 
   const InventoryScreen({
     super.key,
     this.initialOutletId,
     this.initialOutletName,
     this.initialOutletFilterName,
+    this.initialFilter = InventoryScreenFilter.all,
+    this.expiringWithinDays,
   });
 
   @override
@@ -34,7 +40,21 @@ class _InventoryScreenState extends State<InventoryScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedFilter = _mapInitialFilter(widget.initialFilter);
     _productsFuture = _productRepository.fetchProducts();
+  }
+
+  _InventoryFilter _mapInitialFilter(InventoryScreenFilter filter) {
+    switch (filter) {
+      case InventoryScreenFilter.all:
+        return _InventoryFilter.all;
+      case InventoryScreenFilter.critical:
+        return _InventoryFilter.critical;
+      case InventoryScreenFilter.warning:
+        return _InventoryFilter.warning;
+      case InventoryScreenFilter.safe:
+        return _InventoryFilter.safe;
+    }
   }
 
   List<ProductModel> _applyFilters(List<ProductModel> products) {
@@ -113,6 +133,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
                       )
                       .toList();
           }
+
+          if (widget.expiringWithinDays != null) {
+            baseProducts = baseProducts.where((product) {
+              return product.daysUntilExpiry <= widget.expiringWithinDays!;
+            }).toList();
+          }
+
           final products = _applyFilters(baseProducts);
           final urgentCount = products
               .where(

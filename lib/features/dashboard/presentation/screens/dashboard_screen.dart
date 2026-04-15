@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../alerts/presentation/screens/alerts_screen.dart';
+import '../../../delivery/presentation/screens/delivery_screen.dart';
 import '../../../inventory/presentation/screens/inventory_screen.dart';
+import '../../../outlets/presentation/screens/outlets_screen.dart';
+import '../../../scan_invoice/presentation/screens/scan_invoice_screen.dart';
 import '../../../../shared/data/product_repository.dart';
 import '../../../../shared/models/product_model.dart';
 import '../../../../shared/models/product_status.dart';
@@ -24,6 +28,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _productsFuture = _productRepository.fetchProducts();
   }
 
+  void _openInventory({
+    InventoryScreenFilter initialFilter = InventoryScreenFilter.all,
+    int? expiringWithinDays,
+  }) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => InventoryScreen(
+          initialFilter: initialFilter,
+          expiringWithinDays: expiringWithinDays,
+        ),
+      ),
+    );
+  }
+
+  void _openOutlets() {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const OutletsScreen()));
+  }
+
+  void _openAlerts({
+    AlertsScreenFilter initialFilter = AlertsScreenFilter.all,
+  }) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AlertsScreen(initialFilter: initialFilter),
+      ),
+    );
+  }
+
+  void _openScanInvoice() {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const ScanInvoiceScreen()));
+  }
+
+  void _openDelivery() {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const DeliveryScreen()));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,14 +85,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(height: 8),
               _UrgentBanner(metrics: metrics),
               const SizedBox(height: 16),
-              _GridStats(metrics: metrics),
+              _GridStats(
+                metrics: metrics,
+                onTapTotalItems: () => _openInventory(),
+                onTapOutlets: _openOutlets,
+                onTapUrgent: () => _openInventory(
+                  initialFilter: InventoryScreenFilter.critical,
+                ),
+                onTapCritical: () =>
+                    _openAlerts(initialFilter: AlertsScreenFilter.critical),
+                onTapDelivery: _openDelivery,
+                onTapThisWeek: () => _openInventory(expiringWithinDays: 7),
+              ),
               const SizedBox(height: 10),
               _DashboardSectionHeader(
                 thisWeekCount: metrics.thisWeekCount,
                 onViewAll: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const InventoryScreen()),
-                  );
+                  _openInventory();
                 },
               ),
               Expanded(
@@ -279,8 +334,22 @@ class _BannerMetric extends StatelessWidget {
 
 class _GridStats extends StatelessWidget {
   final _DashboardMetrics metrics;
+  final VoidCallback onTapTotalItems;
+  final VoidCallback onTapOutlets;
+  final VoidCallback onTapUrgent;
+  final VoidCallback onTapCritical;
+  final VoidCallback onTapDelivery;
+  final VoidCallback onTapThisWeek;
 
-  const _GridStats({required this.metrics});
+  const _GridStats({
+    required this.metrics,
+    required this.onTapTotalItems,
+    required this.onTapOutlets,
+    required this.onTapUrgent,
+    required this.onTapCritical,
+    required this.onTapDelivery,
+    required this.onTapThisWeek,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -296,6 +365,7 @@ class _GridStats extends StatelessWidget {
                   value: _formatCount(metrics.totalQuantity),
                   icon: LucideIcons.package,
                   iconColor: AppColors.primaryTeal,
+                  onTap: onTapTotalItems,
                 ),
                 const SizedBox(height: 10),
                 _StatCard(
@@ -303,6 +373,7 @@ class _GridStats extends StatelessWidget {
                   value: metrics.criticalCount.toString(),
                   icon: LucideIcons.alertTriangle,
                   iconColor: AppColors.statusCritical,
+                  onTap: onTapCritical,
                 ),
               ],
             ),
@@ -316,6 +387,7 @@ class _GridStats extends StatelessWidget {
                   value: metrics.outletCount.toString(),
                   icon: LucideIcons.store,
                   iconColor: AppColors.primaryTeal,
+                  onTap: onTapOutlets,
                 ),
                 const SizedBox(height: 10),
                 _StatCard(
@@ -323,6 +395,7 @@ class _GridStats extends StatelessWidget {
                   value: '0',
                   icon: LucideIcons.truck,
                   iconColor: AppColors.primaryTeal,
+                  onTap: onTapDelivery,
                 ),
               ],
             ),
@@ -336,6 +409,7 @@ class _GridStats extends StatelessWidget {
                   value: metrics.urgentCount.toString(),
                   icon: LucideIcons.zap,
                   iconColor: AppColors.statusWarning,
+                  onTap: onTapUrgent,
                 ),
                 const SizedBox(height: 10),
                 _StatCard(
@@ -343,6 +417,7 @@ class _GridStats extends StatelessWidget {
                   value: metrics.thisWeekCount.toString(),
                   icon: LucideIcons.clock,
                   iconColor: AppColors.statusWarning,
+                  onTap: onTapThisWeek,
                 ),
               ],
             ),
@@ -358,17 +433,20 @@ class _StatCard extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color iconColor;
+  final VoidCallback? onTap;
 
   const _StatCard({
     required this.title,
     required this.value,
     required this.icon,
     required this.iconColor,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return NeumorphicCard(
+      onTap: onTap,
       padding: EdgeInsets.zero,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),

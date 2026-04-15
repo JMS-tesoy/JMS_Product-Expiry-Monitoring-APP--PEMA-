@@ -7,10 +7,17 @@ import '../../../../shared/models/alert_model.dart';
 import '../../../../shared/models/product_status.dart';
 import '../../../../shared/widgets/neumorphic_card.dart';
 
+enum AlertsScreenFilter { all, critical, warning }
+
 enum _AlertFilter { all, critical, warning }
 
 class AlertsScreen extends StatefulWidget {
-  const AlertsScreen({super.key});
+  final AlertsScreenFilter initialFilter;
+
+  const AlertsScreen({
+    super.key,
+    this.initialFilter = AlertsScreenFilter.all,
+  });
 
   @override
   State<AlertsScreen> createState() => _AlertsScreenState();
@@ -24,7 +31,19 @@ class _AlertsScreenState extends State<AlertsScreen> {
   @override
   void initState() {
     super.initState();
+    _selectedFilter = _mapInitialFilter(widget.initialFilter);
     _alertsFuture = _alertRepository.fetchAlerts();
+  }
+
+  _AlertFilter _mapInitialFilter(AlertsScreenFilter filter) {
+    switch (filter) {
+      case AlertsScreenFilter.all:
+        return _AlertFilter.all;
+      case AlertsScreenFilter.critical:
+        return _AlertFilter.critical;
+      case AlertsScreenFilter.warning:
+        return _AlertFilter.warning;
+    }
   }
 
   List<AlertModel> _applyFilter(List<AlertModel> alerts) {
