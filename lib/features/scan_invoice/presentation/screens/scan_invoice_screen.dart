@@ -23,9 +23,7 @@ class _ScanInvoiceScreenState extends State<ScanInvoiceScreen> {
   final ImagePicker _imagePicker = ImagePicker();
   final DocumentScanner _documentScanner = DocumentScanner(
     options: DocumentScannerOptions(
-      documentFormats: {
-        DocumentFormat.jpeg,
-      },
+      documentFormats: {DocumentFormat.jpeg},
       mode: ScannerMode.filter,
       pageLimit: 1,
       isGalleryImport: false,
@@ -48,7 +46,8 @@ class _ScanInvoiceScreenState extends State<ScanInvoiceScreen> {
       _recognitionError == null;
 
   bool get _hasCapturedInvoiceRows =>
-      _invoiceCaptureSummary != null && _invoiceCaptureSummary!.entries.isNotEmpty;
+      _invoiceCaptureSummary != null &&
+      _invoiceCaptureSummary!.entries.isNotEmpty;
 
   String get _scanStatusDescription {
     if (_isProcessingImage) {
@@ -140,22 +139,21 @@ class _ScanInvoiceScreenState extends State<ScanInvoiceScreen> {
         _recognitionError = 'Unable to scan invoice text.\n$e';
       });
     } finally {
-      if (!mounted || _capturedImage?.path != selectedPath) return;
-
-      setState(() {
-        _isProcessingImage = false;
-      });
+      if (mounted && _capturedImage?.path == selectedPath) {
+        setState(() {
+          _isProcessingImage = false;
+        });
+      }
     }
   }
 
   _InvoiceCaptureSummary _buildInvoiceCaptureSummary(String rawText) {
     final normalizedText = rawText.replaceAll('\r', '\n');
-    final lines =
-        normalizedText
-            .split('\n')
-            .map((line) => line.replaceAll(RegExp(r'\s+'), ' ').trim())
-            .where((line) => line.isNotEmpty)
-            .toList();
+    final lines = normalizedText
+        .split('\n')
+        .map((line) => line.replaceAll(RegExp(r'\s+'), ' ').trim())
+        .where((line) => line.isNotEmpty)
+        .toList();
     final entries = <_InvoiceCaptureEntry>[];
     final seenEntries = <String>{};
     final rowPattern = RegExp(
@@ -186,10 +184,11 @@ class _ScanInvoiceScreenState extends State<ScanInvoiceScreen> {
       if (siNumber == null || siDate == null || customerName == null) continue;
       if (customerName.isEmpty) continue;
 
-      final normalizedCustomerName =
-          customerName.replaceAll(RegExp(r'\s+'), ' ').trim();
-      final dedupeKey =
-          '$siNumber|$siDate|$normalizedCustomerName'.toUpperCase();
+      final normalizedCustomerName = customerName
+          .replaceAll(RegExp(r'\s+'), ' ')
+          .trim();
+      final dedupeKey = '$siNumber|$siDate|$normalizedCustomerName'
+          .toUpperCase();
 
       if (!seenEntries.add(dedupeKey)) continue;
 
@@ -223,9 +222,7 @@ class _ScanInvoiceScreenState extends State<ScanInvoiceScreen> {
 
         await _setSelectedImage(XFile(scannedImagePath));
       } else {
-        final image = await _imagePicker.pickImage(
-          source: ImageSource.camera,
-        );
+        final image = await _imagePicker.pickImage(source: ImageSource.camera);
 
         if (!mounted || image == null) return;
 
@@ -244,11 +241,11 @@ class _ScanInvoiceScreenState extends State<ScanInvoiceScreen> {
         ),
       );
     } finally {
-      if (!mounted) return;
-
-      setState(() {
-        _isOpeningCamera = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isOpeningCamera = false;
+        });
+      }
     }
   }
 
@@ -260,9 +257,7 @@ class _ScanInvoiceScreenState extends State<ScanInvoiceScreen> {
     });
 
     try {
-      final image = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-      );
+      final image = await _imagePicker.pickImage(source: ImageSource.gallery);
 
       if (!mounted || image == null) return;
 
@@ -270,17 +265,15 @@ class _ScanInvoiceScreenState extends State<ScanInvoiceScreen> {
     } catch (_) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Unable to open gallery.'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Unable to open gallery.')));
     } finally {
-      if (!mounted) return;
-
-      setState(() {
-        _isOpeningGallery = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isOpeningGallery = false;
+        });
+      }
     }
   }
 
@@ -304,9 +297,7 @@ class _ScanInvoiceScreenState extends State<ScanInvoiceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Scan Invoice'),
-      ),
+      appBar: AppBar(title: const Text('Scan Invoice')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -321,10 +312,7 @@ class _ScanInvoiceScreenState extends State<ScanInvoiceScreen> {
                   gradient: const LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.cardElevated,
-                      AppColors.cardDark,
-                    ],
+                    colors: [AppColors.cardElevated, AppColors.cardDark],
                   ),
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -339,7 +327,9 @@ class _ScanInvoiceScreenState extends State<ScanInvoiceScreen> {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.primaryTeal.withValues(alpha: 0.12),
+                            color: AppColors.primaryTeal.withValues(
+                              alpha: 0.12,
+                            ),
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: const Text(
@@ -381,35 +371,35 @@ class _ScanInvoiceScreenState extends State<ScanInvoiceScreen> {
                             children: [
                               _capturedImage != null
                                   ? Image.file(
-                                    File(_capturedImage!.path),
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                    fit: BoxFit.cover,
-                                  )
+                                      File(_capturedImage!.path),
+                                      width: double.infinity,
+                                      height: double.infinity,
+                                      fit: BoxFit.cover,
+                                    )
                                   : Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Text(
-                                        'Place invoice inside frame',
-                                        style: TextStyle(
-                                          color: AppColors.textPrimary,
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        'Keep SI no., SI date, and customer name clear and readable.',
-                                        style: TextStyle(
-                                          color: AppColors.textPrimary.withValues(
-                                            alpha: 0.55,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        const Text(
+                                          'Place invoice inside frame',
+                                          style: TextStyle(
+                                            color: AppColors.textPrimary,
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
                                           ),
-                                          fontSize: 12,
                                         ),
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ],
-                                  ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Keep SI no., SI date, and customer name clear and readable.',
+                                          style: TextStyle(
+                                            color: AppColors.textPrimary
+                                                .withValues(alpha: 0.55),
+                                            fontSize: 12,
+                                          ),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                      ],
+                                    ),
                               const _CropFrameOverlay(),
                             ],
                           ),
@@ -522,17 +512,16 @@ class _ScanInvoiceScreenState extends State<ScanInvoiceScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      icon:
-                          _isOpeningCamera
-                              ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.black,
-                                ),
-                              )
-                              : const Icon(LucideIcons.scanLine, size: 18),
+                      icon: _isOpeningCamera
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.black,
+                              ),
+                            )
+                          : const Icon(LucideIcons.scanLine, size: 18),
                       label: Text(
                         _isOpeningCamera ? 'Opening...' : 'Scan',
                         style: const TextStyle(fontWeight: FontWeight.w700),
@@ -556,17 +545,16 @@ class _ScanInvoiceScreenState extends State<ScanInvoiceScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      icon:
-                          _isOpeningGallery
-                              ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: AppColors.textPrimary,
-                                ),
-                              )
-                              : const Icon(LucideIcons.imagePlus, size: 18),
+                      icon: _isOpeningGallery
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppColors.textPrimary,
+                              ),
+                            )
+                          : const Icon(LucideIcons.imagePlus, size: 18),
                       label: Text(
                         _isOpeningGallery ? 'Opening...' : 'Upload Image',
                         style: const TextStyle(fontWeight: FontWeight.w600),
@@ -578,57 +566,38 @@ class _ScanInvoiceScreenState extends State<ScanInvoiceScreen> {
             ),
             if (_capturedImage != null) ...[
               const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 42,
-                      child: OutlinedButton(
-                        onPressed: _isProcessingImage ? null : () {},
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.statusSafe,
-                          side: BorderSide(
-                            color: AppColors.statusSafe.withValues(alpha: 0.22),
-                          ),
-                          backgroundColor: AppColors.cardDark,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Import',
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
+              SizedBox(
+                width: double.infinity,
+                child: SizedBox(
+                  height: 42,
+                  child: OutlinedButton.icon(
+                    onPressed: _isProcessingImage ? null : _discardScannedImage,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.redAccent,
+                      side: BorderSide(
+                        color: Colors.redAccent.withValues(alpha: 0.22),
+                      ),
+                      backgroundColor: AppColors.cardDark,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: SizedBox(
-                      height: 42,
-                      child: OutlinedButton.icon(
-                        onPressed:
-                            _isProcessingImage ? null : _discardScannedImage,
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.redAccent,
-                          side: BorderSide(
-                            color: Colors.redAccent.withValues(alpha: 0.22),
-                          ),
-                          backgroundColor: AppColors.cardDark,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        icon: const Icon(LucideIcons.trash2, size: 18),
-                        label: const Text(
-                          'Discard',
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                      ),
+                    icon: const Icon(LucideIcons.trash2, size: 18),
+                    label: const Text(
+                      'Discard Scan',
+                      style: TextStyle(fontWeight: FontWeight.w600),
                     ),
                   ),
-                ],
+                ),
               ),
+            ],
+            if (_hasCapturedInvoiceRows) ...[
+              const SizedBox(height: 16),
+              _DetectedInvoiceRowsCard(summary: _invoiceCaptureSummary!),
+            ],
+            if (_hasRecognizedText && !_hasCapturedInvoiceRows) ...[
+              const SizedBox(height: 16),
+              _RecognizedTextPreviewCard(recognizedText: _recognizedText!),
             ],
             const SizedBox(height: 16),
             NeumorphicCard(
@@ -659,7 +628,8 @@ class _ScanInvoiceScreenState extends State<ScanInvoiceScreen> {
                   _GuideRow(
                     icon: LucideIcons.searchCode,
                     title: 'Scan one page only',
-                    subtitle: 'Use a clear photo before extracting invoice details.',
+                    subtitle:
+                        'Use a clear photo before extracting invoice details.',
                   ),
                 ],
               ),
@@ -754,11 +724,7 @@ class _GuideRow extends StatelessWidget {
             color: AppColors.primaryTeal.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(
-            icon,
-            color: AppColors.primaryTeal,
-            size: 16,
-          ),
+          child: Icon(icon, color: AppColors.primaryTeal, size: 16),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -793,9 +759,7 @@ class _GuideRow extends StatelessWidget {
 class _InvoiceCaptureSummary {
   final List<_InvoiceCaptureEntry> entries;
 
-  const _InvoiceCaptureSummary({
-    required this.entries,
-  });
+  const _InvoiceCaptureSummary({required this.entries});
 }
 
 class _InvoiceCaptureEntry {
@@ -808,6 +772,160 @@ class _InvoiceCaptureEntry {
     required this.siDate,
     required this.customerName,
   });
+}
+
+class _DetectedInvoiceRowsCard extends StatelessWidget {
+  final _InvoiceCaptureSummary summary;
+
+  const _DetectedInvoiceRowsCard({required this.summary});
+
+  @override
+  Widget build(BuildContext context) {
+    return NeumorphicCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Detected Invoice Rows (${summary.entries.length})',
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ...summary.entries.map(
+            (entry) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: _DetectedInvoiceRow(entry: entry),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DetectedInvoiceRow extends StatelessWidget {
+  final _InvoiceCaptureEntry entry;
+
+  const _DetectedInvoiceRow({required this.entry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.backgroundDark,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            entry.customerName,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _DetectedInvoiceMeta(
+                icon: LucideIcons.scanLine,
+                label: entry.siNumber,
+              ),
+              const SizedBox(width: 12),
+              _DetectedInvoiceMeta(
+                icon: LucideIcons.calendar,
+                label: entry.siDate,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DetectedInvoiceMeta extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _DetectedInvoiceMeta({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Row(
+        children: [
+          Icon(icon, size: 12, color: AppColors.textSecondary),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RecognizedTextPreviewCard extends StatelessWidget {
+  final String recognizedText;
+
+  const _RecognizedTextPreviewCard({required this.recognizedText});
+
+  @override
+  Widget build(BuildContext context) {
+    return NeumorphicCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Recognized Invoice Text',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'OCR found text, but no SI rows matched the current parser yet.',
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.backgroundDark,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+            ),
+            child: SelectableText(
+              recognizedText,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 12,
+                height: 1.45,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _CropCorner extends StatelessWidget {
@@ -825,10 +943,7 @@ class _CropCorner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const accent = BorderSide(
-      color: AppColors.primaryTeal,
-      width: 3,
-    );
+    const accent = BorderSide(color: AppColors.primaryTeal, width: 3);
 
     return SizedBox(
       width: 22,

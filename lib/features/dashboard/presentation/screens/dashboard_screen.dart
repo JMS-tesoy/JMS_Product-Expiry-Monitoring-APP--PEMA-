@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../inventory/presentation/screens/inventory_screen.dart';
 import '../../../../shared/data/product_repository.dart';
 import '../../../../shared/models/product_model.dart';
 import '../../../../shared/models/product_status.dart';
@@ -26,12 +27,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard'),
-        actions: [
-          IconButton(icon: const Icon(LucideIcons.user), onPressed: () {}),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Dashboard')),
       body: FutureBuilder<List<ProductModel>>(
         future: _productsFuture,
         builder: (context, snapshot) {
@@ -45,9 +41,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(height: 16),
               _GridStats(metrics: metrics),
               const SizedBox(height: 10),
-              _DashboardSectionHeader(thisWeekCount: metrics.thisWeekCount),
+              _DashboardSectionHeader(
+                thisWeekCount: metrics.thisWeekCount,
+                onViewAll: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const InventoryScreen()),
+                  );
+                },
+              ),
               Expanded(
-                child: snapshot.connectionState == ConnectionState.waiting &&
+                child:
+                    snapshot.connectionState == ConnectionState.waiting &&
                         products.isEmpty
                     ? const Center(
                         child: CircularProgressIndicator(
@@ -89,10 +93,7 @@ class _UrgentBanner extends StatelessWidget {
           gradient: const LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF261818),
-              Color(0xFF1B1717),
-            ],
+            colors: [Color(0xFF261818), Color(0xFF1B1717)],
           ),
           border: Border.all(
             color: AppColors.statusCritical.withValues(alpha: 0.18),
@@ -159,9 +160,7 @@ class _UrgentBanner extends StatelessWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.statusCritical.withValues(
-                      alpha: 0.12,
-                    ),
+                    color: AppColors.statusCritical.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(
                       color: AppColors.statusCritical.withValues(alpha: 0.12),
@@ -447,8 +446,12 @@ class _StatCard extends StatelessWidget {
 
 class _DashboardSectionHeader extends StatelessWidget {
   final int thisWeekCount;
+  final VoidCallback onViewAll;
 
-  const _DashboardSectionHeader({required this.thisWeekCount});
+  const _DashboardSectionHeader({
+    required this.thisWeekCount,
+    required this.onViewAll,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -482,7 +485,7 @@ class _DashboardSectionHeader extends StatelessWidget {
             ),
           ),
           TextButton(
-            onPressed: () {},
+            onPressed: onViewAll,
             style: TextButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               foregroundColor: AppColors.primaryTeal,
@@ -684,8 +687,10 @@ class _DashboardMetrics {
       urgentCount: urgentProducts.length,
       criticalCount: criticalProducts.length,
       thisWeekCount: thisWeekProducts.length,
-      urgentOutletCount:
-          urgentProducts.map((product) => product.outletId).toSet().length,
+      urgentOutletCount: urgentProducts
+          .map((product) => product.outletId)
+          .toSet()
+          .length,
       remainingDaysLabel: _buildRemainingDaysLabel(attentionProducts),
       expiringSoonProducts: attentionProducts.take(5).toList(),
     );
@@ -705,10 +710,9 @@ Color _statusColorFor(ProductStatus status) {
 }
 
 String _buildRemainingDaysLabel(List<ProductModel> products) {
-  final nextUpcoming = products
-      .where((product) => product.daysUntilExpiry >= 0)
-      .toList()
-    ..sort((a, b) => a.daysUntilExpiry.compareTo(b.daysUntilExpiry));
+  final nextUpcoming =
+      products.where((product) => product.daysUntilExpiry >= 0).toList()
+        ..sort((a, b) => a.daysUntilExpiry.compareTo(b.daysUntilExpiry));
 
   if (nextUpcoming.isNotEmpty) {
     return _formatWindowText(nextUpcoming.first.daysUntilExpiry);

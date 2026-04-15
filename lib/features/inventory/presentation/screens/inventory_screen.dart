@@ -1,12 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../../../app/supabase/supabase_bootstrap.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/data/product_repository.dart';
 import '../../../../shared/models/product_model.dart';
 import '../../../../shared/models/product_status.dart';
 
+enum _InventoryFilter { all, critical, warning, safe }
+
 class InventoryScreen extends StatefulWidget {
-  const InventoryScreen({super.key});
+  final String? initialOutletId;
+  final String? initialOutletName;
+  final String? initialOutletFilterName;
+
+  const InventoryScreen({
+    super.key,
+    this.initialOutletId,
+    this.initialOutletName,
+    this.initialOutletFilterName,
+  });
 
   @override
   State<InventoryScreen> createState() => _InventoryScreenState();
@@ -15,6 +27,9 @@ class InventoryScreen extends StatefulWidget {
 class _InventoryScreenState extends State<InventoryScreen> {
   final ProductRepository _productRepository = const ProductRepository();
   late final Future<List<ProductModel>> _productsFuture;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  _InventoryFilter _selectedFilter = _InventoryFilter.all;
 
   @override
   void initState() {
@@ -22,22 +37,83 @@ class _InventoryScreenState extends State<InventoryScreen> {
     _productsFuture = _productRepository.fetchProducts();
   }
 
+  List<ProductModel> _applyFilters(List<ProductModel> products) {
+    final query = _searchQuery.trim().toLowerCase();
+
+    final searchResults = query.isEmpty
+        ? products
+        : products.where((product) {
+            return product.name.toLowerCase().contains(query) ||
+                product.batchNumber.toLowerCase().contains(query) ||
+                product.outletName.toLowerCase().contains(query) ||
+                product.outletId.toLowerCase().contains(query);
+          }).toList();
+
+    return searchResults.where((product) {
+      switch (_selectedFilter) {
+        case _InventoryFilter.all:
+          return true;
+        case _InventoryFilter.critical:
+          return product.status == ProductStatus.critical ||
+              product.status == ProductStatus.expired;
+        case _InventoryFilter.warning:
+          return product.status == ProductStatus.warning;
+        case _InventoryFilter.safe:
+          return product.status == ProductStatus.safe;
+      }
+    }).toList();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Inventory'),
-        actions: [
-          IconButton(
-            icon: const Icon(LucideIcons.moreVertical),
-            onPressed: () {},
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Inventory')),
       body: FutureBuilder<List<ProductModel>>(
         future: _productsFuture,
         builder: (context, snapshot) {
-          final products = snapshot.data ?? const <ProductModel>[];
+          final allProducts = snapshot.data ?? const <ProductModel>[];
+          final normalizedOutletId = widget.initialOutletId
+              ?.trim()
+              .toLowerCase();
+          final normalizedOutletFilterName = widget.initialOutletFilterName
+              ?.trim()
+              .toLowerCase();
+
+          List<ProductModel> baseProducts;
+
+          if (normalizedOutletId == null &&
+              normalizedOutletFilterName == null) {
+            baseProducts = allProducts;
+          } else {
+            final outletIdMatches = normalizedOutletId == null
+                ? const <ProductModel>[]
+                : allProducts
+                      .where(
+                        (product) =>
+                            product.outletId.trim().toLowerCase() ==
+                            normalizedOutletId,
+                      )
+                      .toList();
+
+            baseProducts = outletIdMatches.isNotEmpty
+                ? outletIdMatches
+                : normalizedOutletFilterName == null
+                ? const <ProductModel>[]
+                : allProducts
+                      .where(
+                        (product) =>
+                            product.outletName.trim().toLowerCase() ==
+                            normalizedOutletFilterName,
+                      )
+                      .toList();
+          }
+          final products = _applyFilters(baseProducts);
           final urgentCount = products
               .where(
                 (product) =>
@@ -48,19 +124,48 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
           return Column(
             children: [
-              const _SearchBar(),
-              const _FilterChips(),
+              _SearchBar(
+                controller: _searchController,
+                query: _searchQuery,
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                  });
+                },
+                onClear: () {
+                  _searchController.clear();
+                  setState(() {
+                    _searchQuery = '';
+                  });
+                },
+              ),
+              _FilterChips(
+                selectedFilter: _selectedFilter,
+                onFilterSelected: (filter) {
+                  setState(() {
+                    _selectedFilter = filter;
+                  });
+                },
+              ),
               _InventorySummary(
+                scopeLabel: widget.initialOutletName,
                 totalCount: products.length,
                 urgentCount: urgentCount,
               ),
               Expanded(
-                child: snapshot.connectionState == ConnectionState.waiting &&
+                child:
+                    snapshot.connectionState == ConnectionState.waiting &&
                         products.isEmpty
                     ? const Center(
                         child: CircularProgressIndicator(
                           color: AppColors.primaryTeal,
                         ),
+                      )
+                    : products.isEmpty
+                    ? _InventoryEmptyState(
+                        hasSearch: _searchQuery.isNotEmpty,
+                        requiresSupabaseConnection:
+                            !SupabaseBootstrap.isInitialized,
                       )
                     : ListView.separated(
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -81,7 +186,17 @@ class _InventoryScreenState extends State<InventoryScreen> {
 }
 
 class _SearchBar extends StatelessWidget {
-  const _SearchBar();
+  final TextEditingController controller;
+  final String query;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClear;
+
+  const _SearchBar({
+    required this.controller,
+    required this.query,
+    required this.onChanged,
+    required this.onClear,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -101,10 +216,9 @@ class _SearchBar extends StatelessWidget {
           ],
         ),
         child: TextField(
-          style: const TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 14,
-          ),
+          controller: controller,
+          onChanged: onChanged,
+          style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
           decoration: InputDecoration(
             hintText: 'Search products, batch, outlet...',
             hintStyle: TextStyle(
@@ -128,11 +242,20 @@ class _SearchBar extends StatelessWidget {
                 ),
               ),
             ),
-            suffixIcon: Icon(
-              LucideIcons.slidersHorizontal,
-              color: AppColors.textPrimary.withValues(alpha: 0.45),
-              size: 18,
-            ),
+            suffixIcon: query.isEmpty
+                ? Icon(
+                    LucideIcons.search,
+                    color: AppColors.textPrimary.withValues(alpha: 0.45),
+                    size: 18,
+                  )
+                : IconButton(
+                    onPressed: onClear,
+                    icon: Icon(
+                      LucideIcons.x,
+                      color: AppColors.textPrimary.withValues(alpha: 0.5),
+                      size: 18,
+                    ),
+                  ),
             filled: true,
             fillColor: Colors.transparent,
             contentPadding: const EdgeInsets.symmetric(
@@ -148,7 +271,13 @@ class _SearchBar extends StatelessWidget {
 }
 
 class _FilterChips extends StatelessWidget {
-  const _FilterChips();
+  final _InventoryFilter selectedFilter;
+  final ValueChanged<_InventoryFilter> onFilterSelected;
+
+  const _FilterChips({
+    required this.selectedFilter,
+    required this.onFilterSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -157,74 +286,168 @@ class _FilterChips extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          _buildChip('All', isSelected: true),
+          _buildChip(
+            'All',
+            isSelected: selectedFilter == _InventoryFilter.all,
+            onTap: () => onFilterSelected(_InventoryFilter.all),
+          ),
           const SizedBox(width: 8),
-          _buildChip('Critical', icon: LucideIcons.alertTriangle, iconColor: AppColors.statusCritical),
+          _buildChip(
+            'Critical',
+            isSelected: selectedFilter == _InventoryFilter.critical,
+            icon: LucideIcons.alertTriangle,
+            iconColor: AppColors.statusCritical,
+            onTap: () => onFilterSelected(_InventoryFilter.critical),
+          ),
           const SizedBox(width: 8),
-          _buildChip('Warning', icon: LucideIcons.clock, iconColor: AppColors.statusWarning),
+          _buildChip(
+            'Warning',
+            isSelected: selectedFilter == _InventoryFilter.warning,
+            icon: LucideIcons.clock,
+            iconColor: AppColors.statusWarning,
+            onTap: () => onFilterSelected(_InventoryFilter.warning),
+          ),
           const SizedBox(width: 8),
-          _buildChip('Safe', icon: LucideIcons.checkCircle2, iconColor: AppColors.statusSafe),
+          _buildChip(
+            'Safe',
+            isSelected: selectedFilter == _InventoryFilter.safe,
+            icon: LucideIcons.checkCircle2,
+            iconColor: AppColors.statusSafe,
+            onTap: () => onFilterSelected(_InventoryFilter.safe),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildChip(String label, {bool isSelected = false, IconData? icon, Color? iconColor}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-      decoration: BoxDecoration(
-        color:
-            isSelected
+  Widget _buildChip(
+    String label, {
+    bool isSelected = false,
+    IconData? icon,
+    Color? iconColor,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primaryTeal
+              : AppColors.cardDark.withValues(alpha: 0.95),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: isSelected
                 ? AppColors.primaryTeal
-                : AppColors.cardDark.withValues(alpha: 0.95),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color:
-              isSelected
-                  ? AppColors.primaryTeal
-                  : Colors.white.withValues(alpha: 0.08),
-        ),
-        boxShadow:
-            isSelected
-                ? [
+                : Colors.white.withValues(alpha: 0.08),
+          ),
+          boxShadow: isSelected
+              ? [
                   BoxShadow(
                     color: AppColors.primaryTeal.withValues(alpha: 0.22),
                     offset: const Offset(0, 6),
                     blurRadius: 18,
                   ),
                 ]
-                : null,
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (icon != null) ...[
-            Icon(
-              icon,
-              size: 14,
-              color: isSelected ? Colors.black : iconColor,
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(
+                icon,
+                size: 14,
+                color: isSelected ? Colors.black : iconColor,
+              ),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.black : AppColors.textSecondary,
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              ),
             ),
-            const SizedBox(width: 6),
           ],
-          Text(
-            label,
-            style: TextStyle(
-              color: isSelected ? Colors.black : AppColors.textSecondary,
-              fontSize: 12,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+        ),
+      ),
+    );
+  }
+}
+
+class _InventoryEmptyState extends StatelessWidget {
+  final bool hasSearch;
+  final bool requiresSupabaseConnection;
+
+  const _InventoryEmptyState({
+    this.hasSearch = false,
+    this.requiresSupabaseConnection = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: AppColors.cardDark,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+              ),
+              child: const Icon(
+                LucideIcons.package,
+                color: AppColors.textSecondary,
+                size: 26,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            Text(
+              hasSearch
+                  ? 'No matching inventory'
+                  : requiresSupabaseConnection
+                  ? 'Supabase is not connected'
+                  : 'No inventory data found',
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              hasSearch
+                  ? 'Try a different product name, batch, or outlet.'
+                  : requiresSupabaseConnection
+                  ? 'Add SUPABASE_URL and SUPABASE_ANON_KEY to .env, then fully restart the app.'
+                  : 'No products were returned from the database.',
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _InventorySummary extends StatelessWidget {
+  final String? scopeLabel;
   final int totalCount;
   final int urgentCount;
 
   const _InventorySummary({
+    this.scopeLabel,
     required this.totalCount,
     required this.urgentCount,
   });
@@ -249,7 +472,9 @@ class _InventorySummary extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '$totalCount batches currently visible',
+                  scopeLabel == null
+                      ? '$totalCount batches currently visible'
+                      : '$totalCount batches in $scopeLabel',
                   style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 12,
@@ -326,8 +551,9 @@ class _ProductCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final statusColor = _getStatusColor();
     final isExpired = product.daysUntilExpiry < 0;
-    final statusText =
-        isExpired ? 'Expired' : '${product.daysUntilExpiry} days left';
+    final statusText = isExpired
+        ? 'Expired'
+        : '${product.daysUntilExpiry} days left';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -360,11 +586,7 @@ class _ProductCard extends StatelessWidget {
                   color: statusColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(
-                  LucideIcons.package,
-                  size: 18,
-                  color: statusColor,
-                ),
+                child: Icon(LucideIcons.package, size: 18, color: statusColor),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -406,7 +628,10 @@ class _ProductCard extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(999),
@@ -414,11 +639,7 @@ class _ProductCard extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      _getStatusIcon(),
-                      size: 12,
-                      color: statusColor,
-                    ),
+                    Icon(_getStatusIcon(), size: 12, color: statusColor),
                     const SizedBox(width: 6),
                     Text(
                       statusText,
@@ -438,7 +659,9 @@ class _ProductCard extends StatelessWidget {
             children: [
               Expanded(child: _buildDataCell('Batch', product.batchNumber)),
               const SizedBox(width: 8),
-              Expanded(child: _buildDataCell('Qty', '${product.quantity} units')),
+              Expanded(
+                child: _buildDataCell('Qty', '${product.quantity} units'),
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: _buildDataCell(
@@ -478,9 +701,12 @@ class _ProductCard extends StatelessWidget {
           Text(
             value,
             style: TextStyle(
-              color: valueColor ?? AppColors.textPrimary.withValues(alpha: 0.92),
+              color:
+                  valueColor ?? AppColors.textPrimary.withValues(alpha: 0.92),
               fontSize: 12,
-              fontWeight: valueColor != null ? FontWeight.bold : FontWeight.normal,
+              fontWeight: valueColor != null
+                  ? FontWeight.bold
+                  : FontWeight.normal,
               fontFamily: label == 'Batch' ? 'monospace' : null,
             ),
             maxLines: 1,

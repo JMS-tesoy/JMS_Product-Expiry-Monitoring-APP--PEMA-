@@ -115,6 +115,7 @@ After running the seed script, verify the data was inserted:
 If you need to reset and re-seed:
 
 ```sql
+DELETE FROM public.sales_invoice_items;
 DELETE FROM public.products;
 ```
 
@@ -134,8 +135,8 @@ Then run the seed script again.
 **Issue**: "Invalid table or permission denied"
 - **Solution**: Ensure RLS policies allow INSERT operations or disable RLS temporarily
 
-**Issue**: Duplicate product IDs
-- **Solution**: Run `DELETE FROM public.products;` first to clear existing data
+**Issue**: Foreign key or duplicate product errors while re-seeding
+- **Solution**: Run `DELETE FROM public.sales_invoice_items;` first, then `DELETE FROM public.products;`
 
 **Issue**: Connection timeout
 - **Solution**: Check your internet connection and Supabase project status

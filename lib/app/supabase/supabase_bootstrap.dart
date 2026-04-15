@@ -8,6 +8,8 @@ class SupabaseBootstrap {
   static bool get isInitialized => _isInitialized;
 
   static Future<void> initialize() async {
+    await SupabaseConfig.loadFromEnvFile();
+
     if (!SupabaseConfig.isConfigured || _isInitialized) return;
 
     try {

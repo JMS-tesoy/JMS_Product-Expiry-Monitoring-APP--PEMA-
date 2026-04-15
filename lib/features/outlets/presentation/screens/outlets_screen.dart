@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../../../app/supabase/supabase_bootstrap.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../inventory/presentation/screens/inventory_screen.dart';
+import '../../../../shared/data/outlet_repository.dart';
 import '../../../../shared/models/outlet_model.dart';
 import '../../../../shared/widgets/neumorphic_card.dart';
+
+enum _OutletFilter { all, urgent, healthy }
 
 class OutletsScreen extends StatefulWidget {
   const OutletsScreen({super.key});
@@ -12,52 +17,36 @@ class OutletsScreen extends StatefulWidget {
 }
 
 class _OutletsScreenState extends State<OutletsScreen> {
-  // Mock Data for Outlets
-  final List<OutletModel> _outlets = [
-    OutletModel(
-      id: 'o1',
-      name: 'City Pharmacy',
-      code: 'CP-001',
-      address: '123 Main St, Downtown',
-      totalProducts: 120,
-      criticalProductsCount: 3,
-    ),
-    OutletModel(
-      id: 'o2',
-      name: 'Downtown Clinic',
-      code: 'DC-042',
-      address: '45 Medical Center Blvd',
-      totalProducts: 165,
-      criticalProductsCount: 0,
-    ),
-    OutletModel(
-      id: 'o3',
-      name: 'Uptown Meds',
-      code: 'UM-108',
-      address: '88 High Street',
-      totalProducts: 210,
-      criticalProductsCount: 0,
-    ),
-    OutletModel(
-      id: 'o4',
-      name: 'Westside Pharmacy',
-      code: 'WP-012',
-      address: '400 West Avenue',
-      totalProducts: 255,
-      criticalProductsCount: 1,
-    ),
-  ];
-
+  final OutletRepository _outletRepository = const OutletRepository();
+  late final Future<List<OutletModel>> _outletsFuture;
   String _searchQuery = '';
+  _OutletFilter _selectedFilter = _OutletFilter.all;
   final TextEditingController _searchController = TextEditingController();
 
-  List<OutletModel> get _filteredOutlets {
-    final query = _searchQuery.trim().toLowerCase();
-    if (query.isEmpty) return _outlets;
+  @override
+  void initState() {
+    super.initState();
+    _outletsFuture = _outletRepository.fetchOutlets();
+  }
 
-    return _outlets.where((outlet) {
-      return outlet.name.toLowerCase().contains(query) ||
-          outlet.code.toLowerCase().contains(query);
+  List<OutletModel> _filteredOutlets(List<OutletModel> outlets) {
+    final query = _searchQuery.trim().toLowerCase();
+    final searchResults = query.isEmpty
+        ? outlets
+        : outlets.where((outlet) {
+            return outlet.name.toLowerCase().contains(query) ||
+                outlet.id.toLowerCase().contains(query);
+          }).toList();
+
+    return searchResults.where((outlet) {
+      switch (_selectedFilter) {
+        case _OutletFilter.all:
+          return true;
+        case _OutletFilter.urgent:
+          return outlet.criticalProductsCount > 0;
+        case _OutletFilter.healthy:
+          return outlet.criticalProductsCount == 0;
+      }
     }).toList();
   }
 
@@ -66,7 +55,22 @@ class _OutletsScreenState extends State<OutletsScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (context) => _OutletDetailSheet(outlet: outlet),
+      builder: (sheetContext) => _OutletDetailSheet(
+        outlet: outlet,
+        onViewInventory: () {
+          Navigator.of(sheetContext).pop();
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => InventoryScreen(
+                initialOutletId: outlet.inventoryOutletId ?? outlet.id,
+                initialOutletName: outlet.name,
+                initialOutletFilterName:
+                    outlet.inventoryOutletName ?? outlet.name,
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -78,62 +82,172 @@ class _OutletsScreenState extends State<OutletsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredOutlets = _filteredOutlets;
-    final urgentOutlets =
-        filteredOutlets
-            .where((outlet) => outlet.criticalProductsCount > 0)
-            .length;
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Outlets'),
-      ),
-      body: Column(
-        children: [
-          _OutletSearchBar(
-            controller: _searchController,
-            query: _searchQuery,
-            onChanged: (value) {
-              setState(() {
-                _searchQuery = value;
-              });
-            },
-            onClear: () {
-              _searchController.clear();
-              setState(() {
-                _searchQuery = '';
-              });
-            },
-          ),
-          _OutletSummary(
-            totalCount: filteredOutlets.length,
-            urgentCount: urgentOutlets,
-          ),
-          Expanded(
-            child:
-                filteredOutlets.isEmpty
-                    ? const _OutletEmptyState()
+      appBar: AppBar(title: const Text('Outlets')),
+      body: FutureBuilder<List<OutletModel>>(
+        future: _outletsFuture,
+        builder: (context, snapshot) {
+          final outlets = snapshot.data ?? const <OutletModel>[];
+          final filteredOutlets = _filteredOutlets(outlets);
+          final urgentOutlets = filteredOutlets
+              .where((outlet) => outlet.criticalProductsCount > 0)
+              .length;
+
+          return Column(
+            children: [
+              _OutletSearchBar(
+                controller: _searchController,
+                query: _searchQuery,
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                  });
+                },
+                onClear: () {
+                  _searchController.clear();
+                  setState(() {
+                    _searchQuery = '';
+                  });
+                },
+              ),
+              _OutletFilterBar(
+                selectedFilter: _selectedFilter,
+                onFilterSelected: (filter) {
+                  setState(() {
+                    _selectedFilter = filter;
+                  });
+                },
+              ),
+              _OutletSummary(
+                totalCount: filteredOutlets.length,
+                urgentCount: urgentOutlets,
+              ),
+              Expanded(
+                child:
+                    snapshot.connectionState == ConnectionState.waiting &&
+                        outlets.isEmpty
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primaryTeal,
+                        ),
+                      )
+                    : filteredOutlets.isEmpty
+                    ? _OutletEmptyState(
+                        hasSearch: _searchQuery.isNotEmpty,
+                        requiresSupabaseConnection:
+                            !SupabaseBootstrap.isInitialized,
+                      )
                     : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                      itemCount: filteredOutlets.length,
-                      separatorBuilder:
-                          (context, index) => const SizedBox(height: 16),
-                      itemBuilder: (context, index) {
-                        final outlet = filteredOutlets[index];
-                        return _OutletCard(
-                          outlet: outlet,
-                          totalProducts: outlet.totalProducts,
-                          criticalProducts: outlet.criticalProductsCount,
-                          onTap: () => _showOutletDetails(context, outlet),
-                        );
-                      },
-                    ),
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                        itemCount: filteredOutlets.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 16),
+                        itemBuilder: (context, index) {
+                          final outlet = filteredOutlets[index];
+                          return _OutletCard(
+                            outlet: outlet,
+                            totalProducts: outlet.totalProducts,
+                            criticalProducts: outlet.criticalProductsCount,
+                            onTap: () => _showOutletDetails(context, outlet),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _OutletFilterBar extends StatelessWidget {
+  final _OutletFilter selectedFilter;
+  final ValueChanged<_OutletFilter> onFilterSelected;
+
+  const _OutletFilterBar({
+    required this.selectedFilter,
+    required this.onFilterSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          _OutletFilterChip(
+            label: 'All',
+            isSelected: selectedFilter == _OutletFilter.all,
+            onTap: () => onFilterSelected(_OutletFilter.all),
+          ),
+          _OutletFilterChip(
+            label: 'Urgent',
+            isSelected: selectedFilter == _OutletFilter.urgent,
+            onTap: () => onFilterSelected(_OutletFilter.urgent),
+            selectedColor: AppColors.statusCritical,
+          ),
+          _OutletFilterChip(
+            label: 'Healthy',
+            isSelected: selectedFilter == _OutletFilter.healthy,
+            onTap: () => onFilterSelected(_OutletFilter.healthy),
+            selectedColor: AppColors.statusSafe,
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        child: const Icon(LucideIcons.plus),
+    );
+  }
+}
+
+class _OutletFilterChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final Color selectedColor;
+
+  const _OutletFilterChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    this.selectedColor = AppColors.primaryTeal,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final foregroundColor = isSelected
+        ? selectedColor
+        : AppColors.textPrimary.withValues(alpha: 0.7);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? selectedColor.withValues(alpha: 0.14)
+                : AppColors.cardDark,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: isSelected
+                  ? selectedColor.withValues(alpha: 0.28)
+                  : Colors.white.withValues(alpha: 0.08),
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: foregroundColor,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -172,12 +286,9 @@ class _OutletSearchBar extends StatelessWidget {
         child: TextField(
           controller: controller,
           onChanged: onChanged,
-          style: const TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 14,
-          ),
+          style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
           decoration: InputDecoration(
-            hintText: 'Search by outlet name or code',
+            hintText: 'Search by branch name or ID',
             hintStyle: TextStyle(
               color: AppColors.textPrimary.withValues(alpha: 0.4),
             ),
@@ -199,21 +310,20 @@ class _OutletSearchBar extends StatelessWidget {
                 ),
               ),
             ),
-            suffixIcon:
-                query.isEmpty
-                    ? Icon(
-                      LucideIcons.slidersHorizontal,
-                      color: AppColors.textPrimary.withValues(alpha: 0.4),
+            suffixIcon: query.isEmpty
+                ? Icon(
+                    LucideIcons.search,
+                    color: AppColors.textPrimary.withValues(alpha: 0.4),
+                    size: 18,
+                  )
+                : IconButton(
+                    onPressed: onClear,
+                    icon: Icon(
+                      LucideIcons.x,
+                      color: AppColors.textPrimary.withValues(alpha: 0.5),
                       size: 18,
-                    )
-                    : IconButton(
-                      onPressed: onClear,
-                      icon: Icon(
-                        LucideIcons.x,
-                        color: AppColors.textPrimary.withValues(alpha: 0.5),
-                        size: 18,
-                      ),
                     ),
+                  ),
             filled: true,
             fillColor: Colors.transparent,
             contentPadding: const EdgeInsets.symmetric(
@@ -232,10 +342,7 @@ class _OutletSummary extends StatelessWidget {
   final int totalCount;
   final int urgentCount;
 
-  const _OutletSummary({
-    required this.totalCount,
-    required this.urgentCount,
-  });
+  const _OutletSummary({required this.totalCount, required this.urgentCount});
 
   @override
   Widget build(BuildContext context) {
@@ -269,16 +376,14 @@ class _OutletSummary extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color:
-                  urgentCount > 0
-                      ? AppColors.statusCritical.withValues(alpha: 0.12)
-                      : AppColors.statusSafe.withValues(alpha: 0.12),
+              color: urgentCount > 0
+                  ? AppColors.statusCritical.withValues(alpha: 0.12)
+                  : AppColors.statusSafe.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(999),
               border: Border.all(
-                color:
-                    urgentCount > 0
-                        ? AppColors.statusCritical.withValues(alpha: 0.2)
-                        : AppColors.statusSafe.withValues(alpha: 0.2),
+                color: urgentCount > 0
+                    ? AppColors.statusCritical.withValues(alpha: 0.2)
+                    : AppColors.statusSafe.withValues(alpha: 0.2),
               ),
             ),
             child: Row(
@@ -289,19 +394,17 @@ class _OutletSummary extends StatelessWidget {
                       ? LucideIcons.alertTriangle
                       : LucideIcons.checkCircle2,
                   size: 14,
-                  color:
-                      urgentCount > 0
-                          ? AppColors.statusCritical
-                          : AppColors.statusSafe,
+                  color: urgentCount > 0
+                      ? AppColors.statusCritical
+                      : AppColors.statusSafe,
                 ),
                 const SizedBox(width: 6),
                 Text(
                   urgentCount > 0 ? '$urgentCount urgent' : 'All safe',
                   style: TextStyle(
-                    color:
-                        urgentCount > 0
-                            ? AppColors.statusCritical
-                            : AppColors.statusSafe,
+                    color: urgentCount > 0
+                        ? AppColors.statusCritical
+                        : AppColors.statusSafe,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                   ),
@@ -316,7 +419,13 @@ class _OutletSummary extends StatelessWidget {
 }
 
 class _OutletEmptyState extends StatelessWidget {
-  const _OutletEmptyState();
+  final bool hasSearch;
+  final bool requiresSupabaseConnection;
+
+  const _OutletEmptyState({
+    this.hasSearch = false,
+    this.requiresSupabaseConnection = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -332,9 +441,7 @@ class _OutletEmptyState extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.cardDark,
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.06),
-                ),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
               ),
               child: const Icon(
                 LucideIcons.search,
@@ -343,8 +450,12 @@ class _OutletEmptyState extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'No outlets found',
+            Text(
+              hasSearch
+                  ? 'No matching outlets'
+                  : requiresSupabaseConnection
+                  ? 'Supabase is not connected'
+                  : 'No outlet data found',
               style: TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 16,
@@ -352,12 +463,14 @@ class _OutletEmptyState extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'Try a different outlet name or code.',
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 12,
-              ),
+            Text(
+              hasSearch
+                  ? 'Try a different branch name or outlet ID.'
+                  : requiresSupabaseConnection
+                  ? 'Add SUPABASE_URL and SUPABASE_ANON_KEY to .env, then fully restart the app.'
+                  : 'Products and sales data are required to build outlet summaries.',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -382,8 +495,9 @@ class _OutletCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasCritical = criticalProducts > 0;
-    final accentColor =
-        hasCritical ? AppColors.statusCritical : AppColors.primaryTeal;
+    final accentColor = hasCritical
+        ? AppColors.statusCritical
+        : AppColors.primaryTeal;
 
     return NeumorphicCard(
       onTap: onTap,
@@ -411,11 +525,7 @@ class _OutletCard extends StatelessWidget {
                     color: accentColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Icon(
-                    LucideIcons.store,
-                    color: accentColor,
-                    size: 22,
-                  ),
+                  child: Icon(LucideIcons.store, color: accentColor, size: 22),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -447,35 +557,13 @@ class _OutletCard extends StatelessWidget {
                               ),
                             ),
                             child: Text(
-                              outlet.code,
+                              outlet.id,
                               style: const TextStyle(
                                 color: AppColors.textSecondary,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                                 fontFamily: 'monospace',
                               ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Icon(
-                            LucideIcons.mapPin,
-                            size: 13,
-                            color: AppColors.textPrimary.withValues(alpha: 0.48),
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              outlet.address,
-                              style: TextStyle(
-                                color: AppColors.textPrimary.withValues(alpha: 0.55),
-                                fontSize: 12,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
@@ -505,37 +593,31 @@ class _OutletCard extends StatelessWidget {
                 Expanded(
                   child: _OutletStatPill(
                     icon: LucideIcons.package,
-                    label: '$totalProducts products',
+                    label: '$totalProducts batches',
                     iconColor: AppColors.primaryTeal,
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: _OutletStatPill(
-                    icon:
-                        hasCritical
-                            ? LucideIcons.alertTriangle
-                            : LucideIcons.checkCircle2,
-                    label:
-                        hasCritical
-                            ? '$criticalProducts critical'
-                            : 'All safe',
-                    iconColor:
-                        hasCritical
-                            ? AppColors.statusCritical
-                            : AppColors.statusSafe,
-                    textColor:
-                        hasCritical
-                            ? AppColors.statusCritical
-                            : AppColors.statusSafe,
-                    backgroundColor:
-                        hasCritical
-                            ? AppColors.statusCritical.withValues(alpha: 0.1)
-                            : AppColors.statusSafe.withValues(alpha: 0.1),
-                    borderColor:
-                        hasCritical
-                            ? AppColors.statusCritical.withValues(alpha: 0.16)
-                            : AppColors.statusSafe.withValues(alpha: 0.16),
+                    icon: hasCritical
+                        ? LucideIcons.alertTriangle
+                        : LucideIcons.checkCircle2,
+                    label: hasCritical
+                        ? '$criticalProducts critical'
+                        : 'All safe',
+                    iconColor: hasCritical
+                        ? AppColors.statusCritical
+                        : AppColors.statusSafe,
+                    textColor: hasCritical
+                        ? AppColors.statusCritical
+                        : AppColors.statusSafe,
+                    backgroundColor: hasCritical
+                        ? AppColors.statusCritical.withValues(alpha: 0.1)
+                        : AppColors.statusSafe.withValues(alpha: 0.1),
+                    borderColor: hasCritical
+                        ? AppColors.statusCritical.withValues(alpha: 0.16)
+                        : AppColors.statusSafe.withValues(alpha: 0.16),
                   ),
                 ),
               ],
@@ -583,7 +665,8 @@ class _OutletStatPill extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                color: textColor ?? AppColors.textPrimary.withValues(alpha: 0.75),
+                color:
+                    textColor ?? AppColors.textPrimary.withValues(alpha: 0.75),
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
@@ -600,13 +683,19 @@ class _OutletStatPill extends StatelessWidget {
 // --- New Detail View Bottom Sheet ---
 class _OutletDetailSheet extends StatelessWidget {
   final OutletModel outlet;
+  final VoidCallback onViewInventory;
 
-  const _OutletDetailSheet({required this.outlet});
+  const _OutletDetailSheet({
+    required this.outlet,
+    required this.onViewInventory,
+  });
 
   @override
   Widget build(BuildContext context) {
     final hasCritical = outlet.criticalProductsCount > 0;
-    final statusColor = hasCritical ? AppColors.statusCritical : AppColors.statusSafe;
+    final statusColor = hasCritical
+        ? AppColors.statusCritical
+        : AppColors.statusSafe;
     final statusText = hasCritical ? 'Action Required' : 'Healthy Status';
 
     return Container(
@@ -632,7 +721,7 @@ class _OutletDetailSheet extends StatelessWidget {
                 ),
               ),
             ),
-            
+
             // Header
             Row(
               children: [
@@ -642,7 +731,11 @@ class _OutletDetailSheet extends StatelessWidget {
                     color: AppColors.primaryTeal.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(LucideIcons.store, color: AppColors.primaryTeal, size: 28),
+                  child: const Icon(
+                    LucideIcons.store,
+                    color: AppColors.primaryTeal,
+                    size: 28,
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -659,7 +752,7 @@ class _OutletDetailSheet extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Code: ${outlet.code}',
+                        'Outlet ID: ${outlet.id}',
                         style: const TextStyle(
                           color: AppColors.textSecondary,
                           fontSize: 14,
@@ -668,24 +761,6 @@ class _OutletDetailSheet extends StatelessWidget {
                       ),
                     ],
                   ),
-                ),
-              ],
-            ),
-            
-            const SizedBox(height: 24),
-            
-            // Address
-            Row(
-              children: [
-                Icon(
-                  LucideIcons.mapPin,
-                  size: 16,
-                  color: AppColors.textPrimary.withValues(alpha: 0.5),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  outlet.address,
-                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
                 ),
               ],
             ),
@@ -699,7 +774,7 @@ class _OutletDetailSheet extends StatelessWidget {
               children: [
                 Expanded(
                   child: _buildDetailStat(
-                    'Total Products',
+                    'Total Batches',
                     outlet.totalProducts.toString(),
                     LucideIcons.package,
                     AppColors.primaryTeal,
@@ -711,10 +786,41 @@ class _OutletDetailSheet extends StatelessWidget {
                     'Critical Items',
                     outlet.criticalProductsCount.toString(),
                     LucideIcons.alertTriangle,
-                    hasCritical ? AppColors.statusCritical : AppColors.textMuted,
+                    hasCritical
+                        ? AppColors.statusCritical
+                        : AppColors.textMuted,
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildDetailStat(
+                    'Total Units',
+                    outlet.totalQuantity.toString(),
+                    LucideIcons.package,
+                    AppColors.primaryTeal,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildDetailStat(
+                    'Invoices',
+                    outlet.invoiceCount.toString(),
+                    LucideIcons.calendar,
+                    AppColors.primaryTeal,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _buildDetailStat(
+              'Customers',
+              outlet.customerCount.toString(),
+              LucideIcons.user,
+              AppColors.primaryTeal,
             ),
 
             const SizedBox(height: 24),
@@ -730,7 +836,9 @@ class _OutletDetailSheet extends StatelessWidget {
               child: Row(
                 children: [
                   Icon(
-                    hasCritical ? LucideIcons.alertOctagon : LucideIcons.checkCircle2,
+                    hasCritical
+                        ? LucideIcons.alertOctagon
+                        : LucideIcons.checkCircle2,
                     color: statusColor,
                   ),
                   const SizedBox(width: 12),
@@ -745,17 +853,14 @@ class _OutletDetailSheet extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Action Button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context); // Close sheet
-                  // TODO: Navigate to filtered inventory for this outlet
-                },
+                onPressed: onViewInventory,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryTeal,
                   foregroundColor: Colors.black,
@@ -776,7 +881,12 @@ class _OutletDetailSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailStat(String label, String value, IconData icon, Color iconColor) {
+  Widget _buildDetailStat(
+    String label,
+    String value,
+    IconData icon,
+    Color iconColor,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(

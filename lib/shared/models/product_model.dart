@@ -8,6 +8,7 @@ class ProductModel {
   final DateTime expiryDate;
   final String outletId;
   final String outletName;
+  final DateTime? createdAt;
 
   ProductModel({
     required this.id,
@@ -17,6 +18,7 @@ class ProductModel {
     required this.expiryDate,
     required this.outletId,
     required this.outletName,
+    this.createdAt,
   });
 
   factory ProductModel.fromMap(Map<String, dynamic> map) {
@@ -30,6 +32,7 @@ class ProductModel {
       expiryDate: _readDateTime(rawExpiryDate),
       outletId: (map['outlet_id'] ?? map['outletId'] ?? '').toString(),
       outletName: (map['outlet_name'] ?? map['outletName'] ?? '').toString(),
+      createdAt: _readNullableDateTime(map['created_at'] ?? map['createdAt']),
     );
   }
 
@@ -42,6 +45,7 @@ class ProductModel {
       'expiry_date': expiryDate.toIso8601String(),
       'outlet_id': outletId,
       'outlet_name': outletName,
+      if (createdAt != null) 'created_at': createdAt!.toIso8601String(),
     };
   }
 
@@ -74,5 +78,13 @@ class ProductModel {
       return DateTime.tryParse(value) ?? DateTime.now();
     }
     return DateTime.now();
+  }
+
+  static DateTime? _readNullableDateTime(dynamic value) {
+    if (value is DateTime) return value;
+    if (value is String && value.isNotEmpty) {
+      return DateTime.tryParse(value);
+    }
+    return null;
   }
 }

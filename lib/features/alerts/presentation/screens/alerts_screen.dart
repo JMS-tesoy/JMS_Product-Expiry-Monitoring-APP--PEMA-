@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import '../../../../app/supabase/supabase_bootstrap.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../shared/data/alert_repository.dart';
 import '../../../../shared/models/alert_model.dart';
 import '../../../../shared/models/product_status.dart';
 import '../../../../shared/widgets/neumorphic_card.dart';
@@ -13,78 +15,77 @@ class AlertsScreen extends StatefulWidget {
 }
 
 class _AlertsScreenState extends State<AlertsScreen> {
-  // Mock Data for Alerts
-  final List<AlertModel> _alerts = [
-    AlertModel(
-      id: 'a1',
-      productId: 'p1',
-      productName: 'Amoxicillin 500mg',
-      outletName: 'City Pharmacy',
-      expiryDate: DateTime.now().add(const Duration(days: 4)),
-      alertType: ProductStatus.critical,
-      createdAt: DateTime.now().subtract(const Duration(hours: 2)),
-      isRead: false,
-    ),
-    AlertModel(
-      id: 'a2',
-      productId: 'p5',
-      productName: 'Lisinopril 10mg',
-      outletName: 'Westside Pharmacy',
-      expiryDate: DateTime.now().add(const Duration(days: 6)),
-      alertType: ProductStatus.critical,
-      createdAt: DateTime.now().subtract(const Duration(hours: 5)),
-      isRead: false,
-    ),
-    AlertModel(
-      id: 'a3',
-      productId: 'p2',
-      productName: 'Ibuprofen 200mg',
-      outletName: 'Downtown Clinic',
-      expiryDate: DateTime.now().add(const Duration(days: 25)),
-      alertType: ProductStatus.warning,
-      createdAt: DateTime.now().subtract(const Duration(days: 1)),
-      isRead: true,
-    ),
-  ];
+  final AlertRepository _alertRepository = const AlertRepository();
+  late final Future<List<AlertModel>> _alertsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _alertsFuture = _alertRepository.fetchAlerts();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Alerts'),
-        actions: [
-          IconButton(
-            icon: const Icon(LucideIcons.settings),
-            onPressed: () {
-              // TODO: Open Alert Settings
-            },
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          const _AlertSummary(),
-          Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: _alerts.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                return _AlertCard(alert: _alerts[index]);
-              },
-            ),
-          ),
-        ],
+      appBar: AppBar(title: const Text('Alerts')),
+      body: FutureBuilder<List<AlertModel>>(
+        future: _alertsFuture,
+        builder: (context, snapshot) {
+          final alerts = snapshot.data ?? const <AlertModel>[];
+
+          return Column(
+            children: [
+              _AlertSummary(alerts: alerts),
+              Expanded(
+                child:
+                    snapshot.connectionState == ConnectionState.waiting &&
+                        alerts.isEmpty
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primaryTeal,
+                        ),
+                      )
+                    : alerts.isEmpty
+                    ? _AlertEmptyState(
+                        requiresSupabaseConnection:
+                            !SupabaseBootstrap.isInitialized,
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: alerts.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          return _AlertCard(alert: alerts[index]);
+                        },
+                      ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 }
 
 class _AlertSummary extends StatelessWidget {
-  const _AlertSummary();
+  final List<AlertModel> alerts;
+
+  const _AlertSummary({required this.alerts});
 
   @override
   Widget build(BuildContext context) {
+    final criticalCount = alerts
+        .where(
+          (alert) =>
+              alert.alertType == ProductStatus.critical ||
+              alert.alertType == ProductStatus.expired,
+        )
+        .length;
+    final warningCount = alerts
+        .where((alert) => alert.alertType == ProductStatus.warning)
+        .length;
+
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: NeumorphicCard(
@@ -92,11 +93,31 @@ class _AlertSummary extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildSummaryItem('Unread', '2', AppColors.primaryTeal),
-            Container(width: 1, height: 40, color: Colors.white.withValues(alpha: 0.1)),
-            _buildSummaryItem('Critical', '2', AppColors.statusCritical),
-            Container(width: 1, height: 40, color: Colors.white.withValues(alpha: 0.1)),
-            _buildSummaryItem('Warning', '1', AppColors.statusWarning),
+            _buildSummaryItem(
+              'Active',
+              '${alerts.length}',
+              AppColors.primaryTeal,
+            ),
+            Container(
+              width: 1,
+              height: 40,
+              color: Colors.white.withValues(alpha: 0.1),
+            ),
+            _buildSummaryItem(
+              'Critical',
+              '$criticalCount',
+              AppColors.statusCritical,
+            ),
+            Container(
+              width: 1,
+              height: 40,
+              color: Colors.white.withValues(alpha: 0.1),
+            ),
+            _buildSummaryItem(
+              'Warning',
+              '$warningCount',
+              AppColors.statusWarning,
+            ),
           ],
         ),
       ),
@@ -125,6 +146,59 @@ class _AlertSummary extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _AlertEmptyState extends StatelessWidget {
+  final bool requiresSupabaseConnection;
+
+  const _AlertEmptyState({this.requiresSupabaseConnection = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                color: AppColors.cardDark,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+              ),
+              child: const Icon(
+                LucideIcons.bell,
+                color: AppColors.textSecondary,
+                size: 26,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              requiresSupabaseConnection
+                  ? 'Supabase is not connected'
+                  : 'No active alerts',
+              style: TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              requiresSupabaseConnection
+                  ? 'Add SUPABASE_URL and SUPABASE_ANON_KEY to .env, then fully restart the app.'
+                  : 'No warning or critical expiry items were returned from the database.',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -172,16 +246,24 @@ class _AlertCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _getAlertColor();
-    final isCritical = alert.alertType == ProductStatus.critical || alert.alertType == ProductStatus.expired;
+    final isCritical =
+        alert.alertType == ProductStatus.critical ||
+        alert.alertType == ProductStatus.expired;
+    final title = alert.alertType == ProductStatus.expired
+        ? 'Expired Batch Alert'
+        : isCritical
+        ? 'Critical Expiry Alert'
+        : 'Expiry Warning';
+    final description = alert.alertType == ProductStatus.expired
+        ? '${alert.productName} at ${alert.outletName} has already expired.'
+        : '${alert.productName} at ${alert.outletName} is expiring soon.';
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: alert.isRead ? AppColors.cardDark : color.withValues(alpha: 0.05),
+        color: color.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: alert.isRead ? Colors.white.withValues(alpha: 0.05) : color.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,7 +285,7 @@ class _AlertCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      isCritical ? 'Critical Expiry Alert' : 'Expiry Warning',
+                      title,
                       style: TextStyle(
                         color: color,
                         fontWeight: FontWeight.bold,
@@ -221,7 +303,7 @@ class _AlertCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '${alert.productName} at ${alert.outletName} is expiring soon.',
+                  description,
                   style: const TextStyle(
                     color: AppColors.textPrimary,
                     fontSize: 14,
@@ -230,7 +312,11 @@ class _AlertCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Icon(LucideIcons.calendar, size: 12, color: AppColors.textSecondary),
+                    Icon(
+                      LucideIcons.calendar,
+                      size: 12,
+                      color: AppColors.textSecondary,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       'Expires: ${alert.expiryDate.year}-${alert.expiryDate.month.toString().padLeft(2, '0')}-${alert.expiryDate.day.toString().padLeft(2, '0')}',
