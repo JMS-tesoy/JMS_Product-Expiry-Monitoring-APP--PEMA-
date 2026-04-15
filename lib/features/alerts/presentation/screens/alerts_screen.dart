@@ -7,6 +7,8 @@ import '../../../../shared/models/alert_model.dart';
 import '../../../../shared/models/product_status.dart';
 import '../../../../shared/widgets/neumorphic_card.dart';
 
+enum _AlertFilter { all, critical, warning }
+
 class AlertsScreen extends StatefulWidget {
   const AlertsScreen({super.key});
 
@@ -17,11 +19,28 @@ class AlertsScreen extends StatefulWidget {
 class _AlertsScreenState extends State<AlertsScreen> {
   final AlertRepository _alertRepository = const AlertRepository();
   late final Future<List<AlertModel>> _alertsFuture;
+  _AlertFilter _selectedFilter = _AlertFilter.all;
 
   @override
   void initState() {
     super.initState();
     _alertsFuture = _alertRepository.fetchAlerts();
+  }
+
+  List<AlertModel> _applyFilter(List<AlertModel> alerts) {
+    switch (_selectedFilter) {
+      case _AlertFilter.all:
+        return alerts;
+      case _AlertFilter.critical:
+        return alerts.where((alert) {
+          return alert.alertType == ProductStatus.critical ||
+              alert.alertType == ProductStatus.expired;
+        }).toList();
+      case _AlertFilter.warning:
+        return alerts
+            .where((alert) => alert.alertType == ProductStatus.warning)
+            .toList();
+    }
   }
 
   @override
@@ -32,10 +51,19 @@ class _AlertsScreenState extends State<AlertsScreen> {
         future: _alertsFuture,
         builder: (context, snapshot) {
           final alerts = snapshot.data ?? const <AlertModel>[];
+          final filteredAlerts = _applyFilter(alerts);
 
           return Column(
             children: [
-              _AlertSummary(alerts: alerts),
+              _AlertSummary(
+                alerts: alerts,
+                selectedFilter: _selectedFilter,
+                onFilterSelected: (filter) {
+                  setState(() {
+                    _selectedFilter = filter;
+                  });
+                },
+              ),
               Expanded(
                 child:
                     snapshot.connectionState == ConnectionState.waiting &&
@@ -45,18 +73,20 @@ class _AlertsScreenState extends State<AlertsScreen> {
                           color: AppColors.primaryTeal,
                         ),
                       )
-                    : alerts.isEmpty
+                    : filteredAlerts.isEmpty
                     ? _AlertEmptyState(
                         requiresSupabaseConnection:
                             !SupabaseBootstrap.isInitialized,
+                        selectedFilter: _selectedFilter,
+                        hasAnyAlerts: alerts.isNotEmpty,
                       )
                     : ListView.separated(
                         padding: const EdgeInsets.all(16),
-                        itemCount: alerts.length,
+                        itemCount: filteredAlerts.length,
                         separatorBuilder: (context, index) =>
                             const SizedBox(height: 12),
                         itemBuilder: (context, index) {
-                          return _AlertCard(alert: alerts[index]);
+                          return _AlertCard(alert: filteredAlerts[index]);
                         },
                       ),
               ),
@@ -70,8 +100,14 @@ class _AlertsScreenState extends State<AlertsScreen> {
 
 class _AlertSummary extends StatelessWidget {
   final List<AlertModel> alerts;
+  final _AlertFilter selectedFilter;
+  final ValueChanged<_AlertFilter> onFilterSelected;
 
-  const _AlertSummary({required this.alerts});
+  const _AlertSummary({
+    required this.alerts,
+    required this.selectedFilter,
+    required this.onFilterSelected,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -93,30 +129,42 @@ class _AlertSummary extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildSummaryItem(
-              'Active',
-              '${alerts.length}',
-              AppColors.primaryTeal,
+            Expanded(
+              child: _buildSummaryItem(
+                label: 'Active',
+                count: '${alerts.length}',
+                color: AppColors.primaryTeal,
+                isSelected: selectedFilter == _AlertFilter.all,
+                onTap: () => onFilterSelected(_AlertFilter.all),
+              ),
             ),
             Container(
               width: 1,
               height: 40,
               color: Colors.white.withValues(alpha: 0.1),
             ),
-            _buildSummaryItem(
-              'Critical',
-              '$criticalCount',
-              AppColors.statusCritical,
+            Expanded(
+              child: _buildSummaryItem(
+                label: 'Critical',
+                count: '$criticalCount',
+                color: AppColors.statusCritical,
+                isSelected: selectedFilter == _AlertFilter.critical,
+                onTap: () => onFilterSelected(_AlertFilter.critical),
+              ),
             ),
             Container(
               width: 1,
               height: 40,
               color: Colors.white.withValues(alpha: 0.1),
             ),
-            _buildSummaryItem(
-              'Warning',
-              '$warningCount',
-              AppColors.statusWarning,
+            Expanded(
+              child: _buildSummaryItem(
+                label: 'Warning',
+                count: '$warningCount',
+                color: AppColors.statusWarning,
+                isSelected: selectedFilter == _AlertFilter.warning,
+                onTap: () => onFilterSelected(_AlertFilter.warning),
+              ),
             ),
           ],
         ),
@@ -124,36 +172,68 @@ class _AlertSummary extends StatelessWidget {
     );
   }
 
-  Widget _buildSummaryItem(String label, String count, Color color) {
-    return Column(
-      children: [
-        Text(
-          count,
-          style: TextStyle(
-            color: color,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
+  Widget _buildSummaryItem({
+    required String label,
+    required String count,
+    required Color color,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? color.withValues(alpha: 0.08) : null,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected
+                  ? color.withValues(alpha: 0.35)
+                  : Colors.transparent,
+            ),
+          ),
+          child: Column(
+            children: [
+              Text(
+                count,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label.toUpperCase(),
+                style: TextStyle(
+                  color: isSelected ? color : AppColors.textMuted,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.0,
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          label.toUpperCase(),
-          style: const TextStyle(
-            color: AppColors.textMuted,
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.0,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }
 
 class _AlertEmptyState extends StatelessWidget {
   final bool requiresSupabaseConnection;
+  final _AlertFilter selectedFilter;
+  final bool hasAnyAlerts;
 
-  const _AlertEmptyState({this.requiresSupabaseConnection = false});
+  const _AlertEmptyState({
+    this.requiresSupabaseConnection = false,
+    this.selectedFilter = _AlertFilter.all,
+    this.hasAnyAlerts = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -181,6 +261,10 @@ class _AlertEmptyState extends StatelessWidget {
             Text(
               requiresSupabaseConnection
                   ? 'Supabase is not connected'
+                  : hasAnyAlerts && selectedFilter == _AlertFilter.critical
+                  ? 'No critical alerts'
+                  : hasAnyAlerts && selectedFilter == _AlertFilter.warning
+                  ? 'No warning alerts'
                   : 'No active alerts',
               style: TextStyle(
                 color: AppColors.textPrimary,
@@ -192,6 +276,10 @@ class _AlertEmptyState extends StatelessWidget {
             Text(
               requiresSupabaseConnection
                   ? 'Add SUPABASE_URL and SUPABASE_ANON_KEY to .env, then fully restart the app.'
+                  : hasAnyAlerts && selectedFilter == _AlertFilter.critical
+                  ? 'There are no critical or expired items in the current alert list.'
+                  : hasAnyAlerts && selectedFilter == _AlertFilter.warning
+                  ? 'There are no warning items in the current alert list.'
                   : 'No warning or critical expiry items were returned from the database.',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
               textAlign: TextAlign.center,

@@ -59,38 +59,38 @@ BEGIN
       invoice_date, payment_method, status, notes, created_at
     )
     VALUES
-      -- City Branch invoices
-      ('inv-001', 'INV-2026-0001', 'sv-city', 'SV More Pharma - City Branch', 'cust-28fd3334951b',
+      -- Mangagoy outlet invoices
+      ('inv-001', 'INV-2026-0001', 'sv-city', 'Mangagoy - City Drug store', 'cust-28fd3334951b',
         'VILLARINA, MELINDA OTAGAN',    2850.00, 285.00, 100.00, '2026-04-14', 'Cash',          'completed', 'Regular customer',             NOW()),
-      ('inv-002', 'INV-2026-0002', 'sv-city', 'SV More Pharma - City Branch', 'cust-28fd3334951b',
+      ('inv-002', 'INV-2026-0002', 'sv-city', 'Mangagoy - City Drug store', 'cust-28fd3334951b',
         'VILLARINA, MELINDA OTAGAN',    1650.00, 165.00,  50.00, '2026-04-14', 'Card',          'completed', 'Prescription refill',          NOW()),
-      ('inv-003', 'INV-2026-0003', 'sv-city', 'SV More Pharma - City Branch', 'cust-07737ff699b4',
+      ('inv-003', 'INV-2026-0003', 'sv-city', 'Mangagoy - City Drug store', 'cust-07737ff699b4',
         'D M R PHARMACY',              5200.00, 520.00, 200.00, '2026-04-13', 'Bank Transfer', 'completed', 'Bulk order',                   NOW()),
 
-      -- Downtown Branch invoices
-      ('inv-004', 'INV-2026-0004', 'sv-downtown', 'SV More Pharma - Downtown Branch', 'cust-1093ccbfc0a8',
+      -- San Franz outlet invoices
+      ('inv-004', 'INV-2026-0004', 'sv-downtown', 'San Franz - Campo Bravo', 'cust-1093ccbfc0a8',
         'E B N PHARMA AND MEDICAL SUPPLIES TRADING', 1960.00, 196.00,   0.00, '2026-04-14', 'Cash',          'completed', 'Over-the-counter purchase',     NOW()),
-      ('inv-005', 'INV-2026-0005', 'sv-downtown', 'SV More Pharma - Downtown Branch', 'cust-0c3cf3ea19a9',
+      ('inv-005', 'INV-2026-0005', 'sv-downtown', 'San Franz - Campo Bravo', 'cust-0c3cf3ea19a9',
         'SARDOMA PHARMACY',            4500.00, 450.00, 150.00, '2026-04-13', 'Bank Transfer', 'completed', 'Monthly supply',                NOW()),
-      ('inv-006', 'INV-2026-0006', 'sv-downtown', 'SV More Pharma - Downtown Branch', 'cust-8670f3eb5e8f',
+      ('inv-006', 'INV-2026-0006', 'sv-downtown', 'San Franz - Campo Bravo', 'cust-8670f3eb5e8f',
         'JOSH PHARMACY',               1000.00, 100.00,  25.00, '2026-04-14', 'Card',          'completed', 'Allergy medication',            NOW()),
 
-      -- Uptown Branch invoices
-      ('inv-007', 'INV-2026-0007', 'sv-uptown', 'SV More Pharma - Uptown Branch', 'cust-2dab6b4434a2',
+      -- Bayugan outlet invoices
+      ('inv-007', 'INV-2026-0007', 'sv-uptown', 'Bayugan - Bayugan Doctors', 'cust-2dab6b4434a2',
         'BOTICA TRACY',                3200.00, 320.00, 100.00, '2026-04-14', 'Cash',          'completed', 'Chronic medication',            NOW()),
-      ('inv-008', 'INV-2026-0008', 'sv-uptown', 'SV More Pharma - Uptown Branch', 'cust-ef532d165a2c',
+      ('inv-008', 'INV-2026-0008', 'sv-uptown', 'Bayugan - Bayugan Doctors', 'cust-ef532d165a2c',
         'DR. RUTH PHARMACY',           6780.00, 678.00, 250.00, '2026-04-12', 'Bank Transfer', 'completed', 'Corporate wellness program',    NOW()),
-      ('inv-009', 'INV-2026-0009', 'sv-uptown', 'SV More Pharma - Uptown Branch', 'cust-31d5a7f91c9c',
+      ('inv-009', 'INV-2026-0009', 'sv-uptown', 'Bayugan - Bayugan Doctors', 'cust-31d5a7f91c9c',
         'CT DRUGSTORE',                1200.00, 120.00,   0.00, '2026-04-14', 'Card',          'completed', 'Cold & flu relief',             NOW()),
 
-      -- Lakeside Branch invoices
-      ('inv-010', 'INV-2026-0010', 'sv-lakeside', 'SV More Pharma - Lakeside Branch', 'cust-f047031bf65d',
+      -- Hinatuan outlet invoices
+      ('inv-010', 'INV-2026-0010', 'sv-lakeside', 'Hinatuan - La Casa Pharmacy', 'cust-f047031bf65d',
         'BOTICA HINATUAN',             2400.00, 240.00,  75.00, '2026-04-14', 'Cash',          'completed', 'Vitamin supplements',           NOW()),
-      ('inv-011', 'INV-2026-0011', 'sv-lakeside', 'SV More Pharma - Lakeside Branch', 'cust-57be6c201435',
+      ('inv-011', 'INV-2026-0011', 'sv-lakeside', 'Hinatuan - La Casa Pharmacy', 'cust-57be6c201435',
         'BUTUAN DOCTORS'' HOSPITAL',   7500.00, 750.00, 300.00, '2026-04-11', 'Bank Transfer', 'completed', 'Quarterly supply',              NOW()),
-      ('inv-012', 'INV-2026-0012', 'sv-lakeside', 'SV More Pharma - Lakeside Branch', 'cust-fdbc20789a40',
+      ('inv-012', 'INV-2026-0012', 'sv-lakeside', 'Hinatuan - La Casa Pharmacy', 'cust-fdbc20789a40',
         'HEALTH SAVER''S PHARMACY',    1080.00, 108.00,  50.00, '2026-04-14', 'Card',          'completed', 'Pain relief',                   NOW()),
-      ('inv-013', 'INV-2026-0013', 'sv-lakeside', 'SV More Pharma - Lakeside Branch', 'cust-a182e3925571',
+      ('inv-013', 'INV-2026-0013', 'sv-lakeside', 'Hinatuan - La Casa Pharmacy', 'cust-a182e3925571',
         'ALCHRYSS PHARMACY',           1800.00, 180.00,  75.00, '2026-04-14', 'Cash',          'completed', 'Regular supply',                NOW());
 
     INSERT INTO public.sales_invoice_items (

@@ -376,29 +376,38 @@ class _ScanInvoiceScreenState extends State<ScanInvoiceScreen> {
                                       height: double.infinity,
                                       fit: BoxFit.cover,
                                     )
-                                  : Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        const Text(
-                                          'Place invoice inside frame',
-                                          style: TextStyle(
-                                            color: AppColors.textPrimary,
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w600,
+                                  : Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 28,
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          const Text(
+                                            'Place invoice inside frame',
+                                            style: TextStyle(
+                                              color: AppColors.textPrimary,
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                            textAlign: TextAlign.center,
                                           ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          'Keep SI no., SI date, and customer name clear and readable.',
-                                          style: TextStyle(
-                                            color: AppColors.textPrimary
-                                                .withValues(alpha: 0.55),
-                                            fontSize: 12,
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            'Keep SI no., SI date,\nand customer name\nclear and readable.',
+                                            style: TextStyle(
+                                              color: AppColors.textPrimary
+                                                  .withValues(alpha: 0.55),
+                                              fontSize: 12,
+                                              height: 1.35,
+                                            ),
+                                            textAlign: TextAlign.center,
                                           ),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
                               const _CropFrameOverlay(),
                             ],

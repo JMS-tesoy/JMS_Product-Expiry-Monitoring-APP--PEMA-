@@ -151,6 +151,13 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 scopeLabel: widget.initialOutletName,
                 totalCount: products.length,
                 urgentCount: urgentCount,
+                onUrgentTap: urgentCount == 0
+                    ? null
+                    : () {
+                        setState(() {
+                          _selectedFilter = _InventoryFilter.critical;
+                        });
+                      },
               ),
               Expanded(
                 child:
@@ -445,11 +452,13 @@ class _InventorySummary extends StatelessWidget {
   final String? scopeLabel;
   final int totalCount;
   final int urgentCount;
+  final VoidCallback? onUrgentTap;
 
   const _InventorySummary({
     this.scopeLabel,
     required this.totalCount,
     required this.urgentCount,
+    this.onUrgentTap,
   });
 
   @override
@@ -483,33 +492,45 @@ class _InventorySummary extends StatelessWidget {
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppColors.statusCritical.withValues(alpha: 0.12),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onUrgentTap,
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: AppColors.statusCritical.withValues(alpha: 0.18),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  LucideIcons.alertTriangle,
-                  size: 14,
-                  color: AppColors.statusCritical,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
                 ),
-                const SizedBox(width: 6),
-                Text(
-                  '$urgentCount urgent',
-                  style: const TextStyle(
-                    color: AppColors.statusCritical,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+                decoration: BoxDecoration(
+                  color: AppColors.statusCritical.withValues(
+                    alpha: onUrgentTap == null ? 0.08 : 0.12,
+                  ),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(
+                    color: AppColors.statusCritical.withValues(alpha: 0.18),
                   ),
                 ),
-              ],
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      LucideIcons.alertTriangle,
+                      size: 14,
+                      color: AppColors.statusCritical,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '$urgentCount urgent',
+                      style: const TextStyle(
+                        color: AppColors.statusCritical,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],
