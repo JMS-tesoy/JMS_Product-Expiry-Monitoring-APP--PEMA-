@@ -1,34 +1,22 @@
 # SV More Pharma - Product Database Seeding Guide
 
 ## Overview
-This guide explains how to seed **32 pharmaceutical products** from SV More Pharma into your Supabase database. The products have been organized into 4 different outlet branches with realistic expiry dates and stock quantities.
+This guide explains how to seed **55 real SV More products** into your Supabase database. The products have been organized into 4 different outlet branches with realistic expiry dates and stock quantities.
 
 ## Product Inventory
 
-### Total Products: 32
-- **City Branch**: 10 products
-- **Downtown Branch**: 8 products
-- **Uptown Branch**: 6 products
-- **Lakeside Branch**: 8 products
+### Total Products: 55
+- **City Branch**: 14 products
+- **Downtown Branch**: 14 products
+- **Uptown Branch**: 16 products
+- **Lakeside Branch**: 11 products
 
-## Pharmaceutical Categories Included
-- Antibiotics (Amoxicillin, Azithromycin, Ciprofloxacin, Doxycycline)
-- Antihistamines & Allergy Medications (Cetirizine, Chlorpheniramine)
-- Analgesics & Anti-Inflammatories (Ibuprofen, Paracetamol, Diclofenac, Naproxen)
-- Cardiovascular Medications (Losartan, Amlodipine, Lisinopril, Metoprolol)
-- Respiratory Medications (Salbutamol Inhaler)
-- Gastrointestinal Medications (Omeprazole, Ranitidine)
-- Antidiabetic Drugs (Metformin)
-- Antifungal Medications (Fluconazole, Clotrimazole)
-- Antivirals (Acyclovir)
-- Pain Management (Tramadol)
-- Steroids (Prednisone)
-- Diuretics (Furosemide)
-- Lipid Management (Atorvastatin, Fenofibrate)
-- Hormonal (Levothyroxine)
-- Antidepressants (Sertraline)
-- Supplements (Calcium + Vitamin D, Multivitamin Syrup)
-- Cough Syrup
+## Product Lines Included
+- SV More tablet and capsule products
+- SV More syrups, drops, sprays, and suspensions
+- FLO nasal and sinus care products
+- Polynerv, Meganerv, Macrobee, NutriCee, Regeron, and Rodazid products
+- Product names match `lib/shared/data/product_images.dart`
 
 ## How to Execute
 
@@ -67,7 +55,7 @@ After running the seed script, verify the data was inserted:
 
 ### In Supabase Dashboard:
 1. Go to **Database** → **Tables** → **products**
-2. You should see **32 rows** with various pharmaceutical products
+2. You should see **55 rows** with real SV More products
 3. Check that expiry dates are calculated from today onwards
 4. Verify outlet names are from SV More Pharma branches
 
@@ -84,28 +72,34 @@ After running the seed script, verify the data was inserted:
 ## Product Expiry Status Distribution
 
 **Critical (0-7 days):**
-- p-001: Amoxicillin (4 days)
-- p-004: Ciprofloxacin (3 days)
-- p-005: Cetirizine (6 days)
-- p-011: Cough Syrup (2 days)
-- p-016: Ranitidine (5 days)
-- p-025: Clotrimazole Cream (1 day)
-- p-019: Doxycycline (11 days)
-- p-020: Fluconazole (7 days)
+- p-001: Acotril 2 mg Tablet (4 days)
+- p-004: Axepron 40 mg PFS for Injection (IV) (3 days)
+- p-005: Bearse Tablet (6 days)
+- p-015: FLO Sinus Care Kit (5 days)
+- p-019: Macrobee with Iron (Reformulated) Tablet (7 days)
+- p-029: Muconase Nasal Spray 60mL (2 days)
+- p-033: NutriCap Tablet (1 day)
+- p-045: Pro-C 500 Capsule (6 days)
 
 **Warning (8-30 days):**
-- p-002: Ibuprofen (25 days)
-- p-006: Metformin (12 days)
-- p-007: Losartan (8 days)
-- p-008: Omeprazole (15 days)
-- p-010: Levothyroxine (20 days)
-- p-012: Azithromycin (9 days)
-- p-013: Diclofenac (28 days)
-- p-015: Lisinopril (22 days)
-- p-022: Spironolactone (18 days)
-- p-024: Sertraline (25 days)
-- p-026: Acyclovir (14 days)
-- p-027: Tramadol (19 days)
+- p-002: Activent 2 mg per 5 mL Syrup (25 days)
+- p-006: Bronchofen Drops (12 days)
+- p-007: Bronchofen Syrup (8 days)
+- p-008: Co-phenylcaine Forte Flexinozzle (15 days)
+- p-010: Doxar 50 mg Tablet (20 days)
+- p-016: FLO Sinus Care Refill Sachet (10 days)
+- p-017: Gastrec 40 mg Capsule (28 days)
+- p-021: Macrobee with Lysine Syrup (22 days)
+- p-022: Maxifol-5000 5 mg Tablet (14 days)
+- p-024: Meganerv 300 Capsule (18 days)
+- p-031: Nidcor 500 mg Tablet (30 days)
+- p-034: Nutricee 500mg Chewable Tablet (14 days)
+- p-035: NutriCee Plus Zinc Syrup (19 days)
+- p-038: Pantopron 40 mg Tablet (24 days)
+- p-046: Prolix 10 mg per 5 ml Suspension (16 days)
+- p-048: Regeron Vita w/ CPE Drops (15mL) (9 days)
+- p-051: Rodazid 125mg/5ml Suspension (13 days)
+- p-054: Venzadril Syrup (27 days)
 
 **Safe (30+ days):**
 - All remaining products with expiry dates > 30 days
@@ -120,6 +114,8 @@ DELETE FROM public.products;
 ```
 
 Then run the seed script again.
+
+If you only need to remove the old generic demo products from an existing database, open `supabase/remove_old_products.sql`, copy its SQL, and run it in the Supabase SQL Editor.
 
 ## Notes
 

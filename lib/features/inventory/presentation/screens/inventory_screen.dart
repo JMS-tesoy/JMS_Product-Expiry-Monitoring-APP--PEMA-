@@ -5,6 +5,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../shared/data/product_repository.dart';
 import '../../../../shared/models/product_model.dart';
 import '../../../../shared/models/product_status.dart';
+import '../../../../shared/widgets/product_thumbnail.dart';
 
 enum InventoryScreenFilter { all, critical, warning, safe }
 
@@ -627,14 +628,12 @@ class _ProductCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(LucideIcons.package, size: 18, color: statusColor),
+              ProductThumbnail(
+                product: product,
+                fallbackColor: statusColor,
+                size: 84,
+                borderRadius: 20,
+                iconSize: 36,
               ),
               const SizedBox(width: 12),
               Expanded(

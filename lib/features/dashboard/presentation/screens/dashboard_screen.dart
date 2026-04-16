@@ -5,11 +5,11 @@ import '../../../alerts/presentation/screens/alerts_screen.dart';
 import '../../../delivery/presentation/screens/delivery_screen.dart';
 import '../../../inventory/presentation/screens/inventory_screen.dart';
 import '../../../outlets/presentation/screens/outlets_screen.dart';
-import '../../../scan_invoice/presentation/screens/scan_invoice_screen.dart';
 import '../../../../shared/data/product_repository.dart';
 import '../../../../shared/models/product_model.dart';
 import '../../../../shared/models/product_status.dart';
 import '../../../../shared/widgets/neumorphic_card.dart';
+import '../../../../shared/widgets/product_thumbnail.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -56,12 +56,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         builder: (_) => AlertsScreen(initialFilter: initialFilter),
       ),
     );
-  }
-
-  void _openScanInvoice() {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const ScanInvoiceScreen()));
   }
 
   void _openDelivery() {
@@ -615,14 +609,12 @@ class _ExpiringItemCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: statusColor.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(LucideIcons.package, color: statusColor, size: 18),
+          ProductThumbnail(
+            product: product,
+            size: 76,
+            borderRadius: 18,
+            fallbackColor: statusColor,
+            iconSize: 36,
           ),
           const SizedBox(width: 10),
           Expanded(

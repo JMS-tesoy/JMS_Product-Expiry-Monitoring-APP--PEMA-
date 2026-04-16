@@ -99,50 +99,50 @@ BEGIN
     )
     VALUES
       -- Invoice INV-2026-0001 (subtotal: 2850.00)
-      ('item-001', 'inv-001', 'p-001', 'Amoxicillin 500mg Capsule',            'AMX2024001', 'LOT-2024-001', 10, 150.00, 1500.00, NOW()),
-      ('item-002', 'inv-001', 'p-003', 'Paracetamol 500mg Tablet',             'PAR2024003', 'LOT-2024-003',  5, 270.00, 1350.00, NOW()),
+      ('item-001', 'inv-001', 'p-001', 'Acotril 2 mg Tablet',                  'ACO2026001', 'LOT-2026-001', 10, 150.00, 1500.00, NOW()),
+      ('item-002', 'inv-001', 'p-003', 'Aminobrain Tablet',                    'AMI2026003', 'LOT-2026-003',  5, 270.00, 1350.00, NOW()),
 
       -- Invoice INV-2026-0002 (subtotal: 1650.00)
-      ('item-003', 'inv-002', 'p-006', 'Metformin 500mg Tablet',               'MET2024006', 'LOT-2024-006',  8, 180.00, 1440.00, NOW()),
-      ('item-004', 'inv-002', 'p-008', 'Omeprazole 20mg Capsule',              'OME2024008', 'LOT-2024-008',  3,  70.00,  210.00, NOW()),
+      ('item-003', 'inv-002', 'p-006', 'Bronchofen Drops',                     'BRD2026006', 'LOT-2026-006',  8, 180.00, 1440.00, NOW()),
+      ('item-004', 'inv-002', 'p-008', 'Co-phenylcaine Forte Flexinozzle',     'CPF2026008', 'LOT-2026-008',  3,  70.00,  210.00, NOW()),
 
       -- Invoice INV-2026-0003 (subtotal: 5200.00)
-      ('item-005', 'inv-003', 'p-002', 'Ibuprofen 200mg Tablet',               'IBU2024002', 'LOT-2024-002', 20, 150.00, 3000.00, NOW()),
-      ('item-006', 'inv-003', 'p-012', 'Azithromycin 250mg Tablet',            'AZI2024012', 'LOT-2024-012', 10, 220.00, 2200.00, NOW()),
+      ('item-005', 'inv-003', 'p-002', 'Activent 2 mg per 5 mL Syrup',         'ACT2026002', 'LOT-2026-002', 20, 150.00, 3000.00, NOW()),
+      ('item-006', 'inv-003', 'p-012', 'FLO Baby Saline Nasal Spray',          'FLO2026012', 'LOT-2026-012', 10, 220.00, 2200.00, NOW()),
 
       -- Invoice INV-2026-0004 (subtotal: 1960.00 — was wrongly 1950.00)
-      ('item-007', 'inv-004', 'p-033', 'Acotril 2 mg Tablet (Glimepiride)',    'ACT2024033', 'LOT-2024-033',  7, 280.00, 1960.00, NOW()),
+      ('item-007', 'inv-004', 'p-034', 'Nutricee 500mg Chewable Tablet',       'NCE2026034', 'LOT-2026-034',  7, 280.00, 1960.00, NOW()),
 
       -- Invoice INV-2026-0005 (subtotal: 4500.00)
-      ('item-008', 'inv-005', 'p-009', 'Atorvastatin 10mg Tablet',             'ATV2024009', 'LOT-2024-009', 15, 200.00, 3000.00, NOW()),
-      ('item-009', 'inv-005', 'p-007', 'Losartan 50mg Tablet',                 'LOS2024007', 'LOT-2024-007', 10, 150.00, 1500.00, NOW()),
+      ('item-008', 'inv-005', 'p-009', 'Co-phenylcaine Forte Spray',           'CPS2026009', 'LOT-2026-009', 15, 200.00, 3000.00, NOW()),
+      ('item-009', 'inv-005', 'p-007', 'Bronchofen Syrup',                     'BRS2026007', 'LOT-2026-007', 10, 150.00, 1500.00, NOW()),
 
       -- Invoice INV-2026-0006 (subtotal: 1000.00 — was wrongly 850.00)
-      ('item-010', 'inv-006', 'p-034', 'Activent 2 mg per 5 mL Syrup',        'ACT2024034', 'LOT-2024-034',  4, 250.00, 1000.00, NOW()),
+      ('item-010', 'inv-006', 'p-035', 'NutriCee Plus Zinc Syrup',             'NZS2026035', 'LOT-2026-035',  4, 250.00, 1000.00, NOW()),
 
       -- Invoice INV-2026-0007 (subtotal: 3200.00)
-      ('item-011', 'inv-007', 'p-035', 'Aminobrain Tablet',                    'AMN2024035', 'LOT-2024-035', 12, 200.00, 2400.00, NOW()),
-      ('item-012', 'inv-007', 'p-046', 'Macrobee with Iron (Reformulated) Tablet', 'MAC2024046', 'LOT-2024-046', 5, 160.00, 800.00, NOW()),
+      ('item-011', 'inv-007', 'p-036', 'Orthroat Oral Spray 20mL',             'ORO2026036', 'LOT-2026-036', 12, 200.00, 2400.00, NOW()),
+      ('item-012', 'inv-007', 'p-046', 'Prolix 10 mg per 5 ml Suspension',     'PRS2026046', 'LOT-2026-046',  5, 160.00,  800.00, NOW()),
 
       -- Invoice INV-2026-0008 (subtotal: 6780.00 — was wrongly 6800.00)
-      ('item-013', 'inv-008', 'p-037', 'Bactille TS 400mg/80mg Suspension',   'BAC2024037', 'LOT-2024-037', 25, 180.00, 4500.00, NOW()),
-      ('item-014', 'inv-008', 'p-043', 'Doxar 50 mg Tablet',                  'DOX2024043', 'LOT-2024-043', 12, 190.00, 2280.00, NOW()),
+      ('item-013', 'inv-008', 'p-038', 'Pantopron 40 mg Tablet',               'PAN2026038', 'LOT-2026-038', 25, 180.00, 4500.00, NOW()),
+      ('item-014', 'inv-008', 'p-043', 'Polynerv Forte Tablet',                'PFT2026043', 'LOT-2026-043', 12, 190.00, 2280.00, NOW()),
 
       -- Invoice INV-2026-0009 (subtotal: 1200.00)
-      ('item-015', 'inv-009', 'p-039', 'Bronchofen Drops',                    'BRO2024039', 'LOT-2024-039',  8, 150.00, 1200.00, NOW()),
+      ('item-015', 'inv-009', 'p-040', 'Polynerv 250 Tablet',                  'PO22026040', 'LOT-2026-040',  8, 150.00, 1200.00, NOW()),
 
       -- Invoice INV-2026-0010 (subtotal: 2400.00)
-      ('item-016', 'inv-010', 'p-049', 'Maxifol-5000 5 mg Tablet',            'MAX2024049', 'LOT-2024-049', 10, 240.00, 2400.00, NOW()),
+      ('item-016', 'inv-010', 'p-048', 'Regeron Vita w/ CPE Drops (15mL)',     'RVD2026048', 'LOT-2026-048', 10, 240.00, 2400.00, NOW()),
 
       -- Invoice INV-2026-0011 (subtotal: 7500.00)
-      ('item-017', 'inv-011', 'p-045', 'Gastrec 40 mg Capsule',               'GAS2024045', 'LOT-2024-045', 30, 180.00, 5400.00, NOW()),
-      ('item-018', 'inv-011', 'p-051', 'Polynerv Forte Film-Coated Tablet',   'POL2024051', 'LOT-2024-051', 15, 140.00, 2100.00, NOW()),
+      ('item-017', 'inv-011', 'p-045', 'Pro-C 500 Capsule',                    'PRC2026045', 'LOT-2026-045', 30, 180.00, 5400.00, NOW()),
+      ('item-018', 'inv-011', 'p-050', 'Regeron-E Plus Capsule',               'REP2026050', 'LOT-2026-050', 15, 140.00, 2100.00, NOW()),
 
       -- Invoice INV-2026-0012 (subtotal: 1080.00 — was wrongly 1100.00)
-      ('item-019', 'inv-012', 'p-052', 'Zithrocin 500 mg Tablet (Azithromycin)', 'ZIT2024052', 'LOT-2024-052', 6, 180.00, 1080.00, NOW()),
+      ('item-019', 'inv-012', 'p-055', 'Zithrocin 500 mg Tablet',              'ZIT2026055', 'LOT-2026-055',  6, 180.00, 1080.00, NOW()),
 
       -- Invoice INV-2026-0013 (subtotal: 1800.00)
-      ('item-020', 'inv-013', 'p-034', 'Activent 2 mg per 5 mL Syrup',       'ACT2024034', 'LOT-2024-034',  6, 300.00, 1800.00, NOW());
+      ('item-020', 'inv-013', 'p-035', 'NutriCee Plus Zinc Syrup',             'NZS2026035', 'LOT-2026-035',  6, 300.00, 1800.00, NOW());
 
     RAISE NOTICE 'Inserted 12 customers, 13 sales invoices with 20 line items successfully.';
   ELSE
