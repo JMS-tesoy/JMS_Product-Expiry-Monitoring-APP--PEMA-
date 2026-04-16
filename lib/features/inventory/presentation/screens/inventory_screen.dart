@@ -64,8 +64,12 @@ class _InventoryScreenState extends State<InventoryScreen> {
     final searchResults = query.isEmpty
         ? products
         : products.where((product) {
+            final invoiceNumber = _shortInvoiceNumber(product.batchNumber)
+                .toLowerCase();
+
             return product.name.toLowerCase().contains(query) ||
                 product.batchNumber.toLowerCase().contains(query) ||
+                invoiceNumber.contains(query) ||
                 product.outletName.toLowerCase().contains(query) ||
                 product.outletId.toLowerCase().contains(query);
           }).toList();
@@ -83,6 +87,12 @@ class _InventoryScreenState extends State<InventoryScreen> {
           return product.status == ProductStatus.safe;
       }
     }).toList();
+  }
+
+  String _shortInvoiceNumber(String value) {
+    final trimmedValue = value.trim();
+    if (trimmedValue.length <= 5) return trimmedValue;
+    return trimmedValue.substring(trimmedValue.length - 5);
   }
 
   @override
