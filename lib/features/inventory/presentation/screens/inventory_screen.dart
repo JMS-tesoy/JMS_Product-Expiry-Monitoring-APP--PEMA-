@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../app/supabase/supabase_bootstrap.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../shared/data/product_images.dart';
 import '../../../../shared/data/product_repository.dart';
 import '../../../../shared/models/product_model.dart';
 import '../../../../shared/models/product_status.dart';
-import '../../../../shared/widgets/product_thumbnail.dart';
 
 enum InventoryScreenFilter { all, critical, warning, safe }
 
@@ -93,64 +93,83 @@ class _InventoryScreenState extends State<InventoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Inventory')),
-      body: FutureBuilder<List<ProductModel>>(
-        future: _productsFuture,
-        builder: (context, snapshot) {
-          final allProducts = snapshot.data ?? const <ProductModel>[];
-          final normalizedOutletId = widget.initialOutletId
-              ?.trim()
-              .toLowerCase();
-          final normalizedOutletFilterName = widget.initialOutletFilterName
-              ?.trim()
-              .toLowerCase();
+    return FutureBuilder<List<ProductModel>>(
+      future: _productsFuture,
+      builder: (context, snapshot) {
+        final allProducts = snapshot.data ?? const <ProductModel>[];
+        final normalizedOutletId = widget.initialOutletId?.trim().toLowerCase();
+        final normalizedOutletFilterName = widget.initialOutletFilterName
+            ?.trim()
+            .toLowerCase();
 
-          List<ProductModel> baseProducts;
+        List<ProductModel> baseProducts;
 
-          if (normalizedOutletId == null &&
-              normalizedOutletFilterName == null) {
-            baseProducts = allProducts;
-          } else {
-            final outletIdMatches = normalizedOutletId == null
-                ? const <ProductModel>[]
-                : allProducts
-                      .where(
-                        (product) =>
-                            product.outletId.trim().toLowerCase() ==
-                            normalizedOutletId,
-                      )
-                      .toList();
+        if (normalizedOutletId == null && normalizedOutletFilterName == null) {
+          baseProducts = allProducts;
+        } else {
+          final outletIdMatches = normalizedOutletId == null
+              ? const <ProductModel>[]
+              : allProducts
+                    .where(
+                      (product) =>
+                          product.outletId.trim().toLowerCase() ==
+                          normalizedOutletId,
+                    )
+                    .toList();
 
-            baseProducts = outletIdMatches.isNotEmpty
-                ? outletIdMatches
-                : normalizedOutletFilterName == null
-                ? const <ProductModel>[]
-                : allProducts
-                      .where(
-                        (product) =>
-                            product.outletName.trim().toLowerCase() ==
-                            normalizedOutletFilterName,
-                      )
-                      .toList();
-          }
+          baseProducts = outletIdMatches.isNotEmpty
+              ? outletIdMatches
+              : normalizedOutletFilterName == null
+              ? const <ProductModel>[]
+              : allProducts
+                    .where(
+                      (product) =>
+                          product.outletName.trim().toLowerCase() ==
+                          normalizedOutletFilterName,
+                    )
+                    .toList();
+        }
 
-          if (widget.expiringWithinDays != null) {
-            baseProducts = baseProducts.where((product) {
-              return product.daysUntilExpiry <= widget.expiringWithinDays!;
-            }).toList();
-          }
+        if (widget.expiringWithinDays != null) {
+          baseProducts = baseProducts.where((product) {
+            return product.daysUntilExpiry <= widget.expiringWithinDays!;
+          }).toList();
+        }
 
-          final products = _applyFilters(baseProducts);
-          final urgentCount = products
-              .where(
-                (product) =>
-                    product.status == ProductStatus.critical ||
-                    product.status == ProductStatus.expired,
-              )
-              .length;
+        final products = _applyFilters(baseProducts);
+        final urgentCount = products
+            .where(
+              (product) =>
+                  product.status == ProductStatus.critical ||
+                  product.status == ProductStatus.expired,
+            )
+            .length;
+        final countLabel = widget.initialOutletName == null
+            ? '${products.length} batches currently visible'
+            : '${products.length} batches in ${widget.initialOutletName}';
 
-          return Column(
+        return Scaffold(
+          appBar: AppBar(
+            title: Row(
+              children: [
+                const Text('Inventory'),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    countLabel,
+                    style: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          body: Column(
             children: [
               _SearchBar(
                 controller: _searchController,
@@ -176,8 +195,6 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 },
               ),
               _InventorySummary(
-                scopeLabel: widget.initialOutletName,
-                totalCount: products.length,
                 urgentCount: urgentCount,
                 onUrgentTap: urgentCount == 0
                     ? null
@@ -210,12 +227,12 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         itemBuilder: (context, index) {
                           return _ProductCard(product: products[index]);
                         },
-                      ),
+                ),
               ),
             ],
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -477,14 +494,10 @@ class _InventoryEmptyState extends StatelessWidget {
 }
 
 class _InventorySummary extends StatelessWidget {
-  final String? scopeLabel;
-  final int totalCount;
   final int urgentCount;
   final VoidCallback? onUrgentTap;
 
   const _InventorySummary({
-    this.scopeLabel,
-    required this.totalCount,
     required this.urgentCount,
     this.onUrgentTap,
   });
@@ -492,76 +505,50 @@ class _InventorySummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Inventory Overview',
-                  style: TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onUrgentTap,
+            borderRadius: BorderRadius.circular(999),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.statusCritical.withValues(
+                  alpha: onUrgentTap == null ? 0.08 : 0.12,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  scopeLabel == null
-                      ? '$totalCount batches currently visible'
-                      : '$totalCount batches in $scopeLabel',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
-                  ),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(
+                  color: AppColors.statusCritical.withValues(alpha: 0.18),
                 ),
-              ],
-            ),
-          ),
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: onUrgentTap,
-              borderRadius: BorderRadius.circular(999),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.statusCritical.withValues(
-                    alpha: onUrgentTap == null ? 0.08 : 0.12,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    LucideIcons.alertTriangle,
+                    size: 14,
+                    color: AppColors.statusCritical,
                   ),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(
-                    color: AppColors.statusCritical.withValues(alpha: 0.18),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      LucideIcons.alertTriangle,
-                      size: 14,
+                  const SizedBox(width: 6),
+                  Text(
+                    '$urgentCount urgent',
+                    style: const TextStyle(
                       color: AppColors.statusCritical,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '$urgentCount urgent',
-                      style: const TextStyle(
-                        color: AppColors.statusCritical,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -584,28 +571,20 @@ class _ProductCard extends StatelessWidget {
     }
   }
 
-  IconData _getStatusIcon() {
-    switch (product.status) {
-      case ProductStatus.safe:
-        return LucideIcons.checkCircle2;
-      case ProductStatus.warning:
-        return LucideIcons.clock;
-      case ProductStatus.critical:
-      case ProductStatus.expired:
-        return LucideIcons.alertTriangle;
-    }
+  String _getInvoiceNumber() {
+    final value = product.batchNumber.trim();
+    if (value.length <= 5) return value;
+    return value.substring(value.length - 5);
   }
 
   @override
   Widget build(BuildContext context) {
     final statusColor = _getStatusColor();
     final isExpired = product.daysUntilExpiry < 0;
-    final statusText = isExpired
-        ? 'Expired'
-        : '${product.daysUntilExpiry} days left';
+    final invoiceNumber = _getInvoiceNumber();
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
@@ -622,114 +601,135 @@ class _ProductCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ProductThumbnail(
-                product: product,
-                fallbackColor: statusColor,
-                size: 84,
-                borderRadius: 20,
-                iconSize: 36,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      product.name,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Icon(
-                          LucideIcons.store,
-                          size: 12,
-                          color: AppColors.textPrimary.withValues(alpha: 0.55),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final thumbnailWidth = constraints.maxWidth / 3;
+
+          return SizedBox(
+            height: 84,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  width: thumbnailWidth,
+                  child: _buildThumbnailPanel(statusColor),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        product.name,
+                        style: const TextStyle(
+                          color: AppColors.textPrimary,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
                         ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            product.outletName,
-                            style: const TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 12,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Icon(
+                            LucideIcons.store,
+                            size: 11,
+                            color: AppColors.textPrimary.withValues(
+                              alpha: 0.55,
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(_getStatusIcon(), size: 12, color: statusColor),
-                    const SizedBox(width: 6),
-                    Text(
-                      statusText,
-                      style: TextStyle(
-                        color: statusColor,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              product.outletName,
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 11,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildDataCell(
+                              'Invoice',
+                              invoiceNumber,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: _buildDataCell(
+                              'Qty',
+                              product.quantity.toString(),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: _buildDataCell(
+                              'Status',
+                              isExpired
+                                  ? 'Expired'
+                                  : '${product.daysUntilExpiry} Days',
+                              valueColor: statusColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(child: _buildDataCell('Batch', product.batchNumber)),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildDataCell('Qty', '${product.quantity} units'),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _buildDataCell(
-                  'Status',
-                  isExpired ? 'Expired' : '${product.daysUntilExpiry} Days',
-                  valueColor: statusColor,
-                ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          );
+        },
       ),
+    );
+  }
+
+  Widget _buildThumbnailPanel(Color statusColor) {
+    final imageUrl = product.thumbnailUrl;
+    final fallbackIcon = Icon(
+      LucideIcons.package,
+      size: 28,
+      color: statusColor,
+    );
+
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: imageUrl == null
+          ? Center(child: fallbackIcon)
+          : Image.network(
+              imageUrl,
+              width: double.infinity,
+              height: double.infinity,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) =>
+                  Center(child: fallbackIcon),
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Center(child: fallbackIcon);
+              },
+            ),
     );
   }
 
   Widget _buildDataCell(String label, String value, {Color? valueColor}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       decoration: BoxDecoration(
         color: AppColors.backgroundDark,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Column(
@@ -739,22 +739,24 @@ class _ProductCard extends StatelessWidget {
             label.toUpperCase(),
             style: TextStyle(
               color: AppColors.textPrimary.withValues(alpha: 0.42),
-              fontSize: 10,
+              fontSize: 8,
               fontWeight: FontWeight.bold,
-              letterSpacing: 0.5,
+              letterSpacing: 0,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 1),
           Text(
             value,
             style: TextStyle(
               color:
                   valueColor ?? AppColors.textPrimary.withValues(alpha: 0.92),
-              fontSize: 12,
+              fontSize: 10,
               fontWeight: valueColor != null
                   ? FontWeight.bold
                   : FontWeight.normal,
-              fontFamily: label == 'Batch' ? 'monospace' : null,
+              fontFamily: label == 'Invoice' ? 'monospace' : null,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
