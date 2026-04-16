@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import '../data/product_images.dart';
@@ -94,7 +95,7 @@ class _PrecachedThumbnailImage extends StatefulWidget {
 
 class _PrecachedThumbnailImageState extends State<_PrecachedThumbnailImage> {
   String? _imageUrl;
-  NetworkImage? _imageProvider;
+  CachedNetworkImageProvider? _imageProvider;
 
   @override
   void didChangeDependencies() {
@@ -115,7 +116,9 @@ class _PrecachedThumbnailImageState extends State<_PrecachedThumbnailImage> {
     if (nextImageUrl == _imageUrl) return;
 
     _imageUrl = nextImageUrl;
-    _imageProvider = nextImageUrl == null ? null : NetworkImage(nextImageUrl);
+    _imageProvider = nextImageUrl == null
+        ? null
+        : CachedNetworkImageProvider(nextImageUrl);
 
     final imageProvider = _imageProvider;
     if (imageProvider != null) {

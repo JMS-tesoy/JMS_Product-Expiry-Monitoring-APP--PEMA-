@@ -67,7 +67,7 @@ const Map<String, String> productImages = {
   'Rodazid 500 mg Tablet': 'https://svmoregroup.com/wp-content/uploads/2022/06/Rodazid-Tablet.jpg',
   'Udcacid 300 mg Tablet': 'https://svmoregroup.com/wp-content/uploads/2022/06/Udcacid-300-Tablet.jpg',
   'Venzadril Syrup': 'https://svmoregroup.com/wp-content/uploads/2022/06/Venzadril-Syrup.jpg',
-  'Zithrocin 500 mg Tablet': 'https://svmoregroup.com/wp-content/uploads/2022/06/Zithrocin-500-mg-Tablet.jpg',
+  'Zithrocin 500 mg Tablet': 'https://svmoregroup.com/wp-content/uploads/2022/06/Zithrocin-Tablet-600x600.jpg',
 };
 
 String? productImageUrlForName(String productName) {
