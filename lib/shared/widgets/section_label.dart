@@ -21,9 +21,9 @@ class SectionLabel extends StatelessWidget {
         children: [
           Text(
             title,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontSize: 18,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontSize: 18),
           ),
           if (onActionPressed != null && actionText != null)
             TextButton(

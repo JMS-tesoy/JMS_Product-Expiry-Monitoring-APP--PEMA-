@@ -26,7 +26,9 @@ class NeumorphicCard extends StatelessWidget {
           border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2), // Much softer dark shadow
+              color: Colors.black.withValues(
+                alpha: 0.2,
+              ), // Much softer dark shadow
               offset: const Offset(0, 4),
               blurRadius: 8,
             ),

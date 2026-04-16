@@ -33,10 +33,7 @@ class AppBottomNav extends StatelessWidget {
           icon: Icon(LucideIcons.store),
           label: 'Outlets',
         ),
-        BottomNavigationBarItem(
-          icon: Icon(LucideIcons.bell),
-          label: 'Alerts',
-        ),
+        BottomNavigationBarItem(icon: Icon(LucideIcons.bell), label: 'Alerts'),
       ],
     );
   }

@@ -64,8 +64,9 @@ class _InventoryScreenState extends State<InventoryScreen> {
     final searchResults = query.isEmpty
         ? products
         : products.where((product) {
-            final invoiceNumber = _shortInvoiceNumber(product.batchNumber)
-                .toLowerCase();
+            final invoiceNumber = _shortInvoiceNumber(
+              product.batchNumber,
+            ).toLowerCase();
 
             return product.name.toLowerCase().contains(query) ||
                 product.batchNumber.toLowerCase().contains(query) ||
@@ -237,7 +238,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         itemBuilder: (context, index) {
                           return _ProductCard(product: products[index]);
                         },
-                ),
+                      ),
               ),
             ],
           ),
@@ -507,10 +508,7 @@ class _InventorySummary extends StatelessWidget {
   final int urgentCount;
   final VoidCallback? onUrgentTap;
 
-  const _InventorySummary({
-    required this.urgentCount,
-    this.onUrgentTap,
-  });
+  const _InventorySummary({required this.urgentCount, this.onUrgentTap});
 
   @override
   Widget build(BuildContext context) {
@@ -524,10 +522,7 @@ class _InventorySummary extends StatelessWidget {
             onTap: onUrgentTap,
             borderRadius: BorderRadius.circular(999),
             child: Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 8,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: AppColors.statusCritical.withValues(
                   alpha: onUrgentTap == null ? 0.08 : 0.12,
@@ -671,10 +666,7 @@ class _ProductCard extends StatelessWidget {
                       Row(
                         children: [
                           Expanded(
-                            child: _buildDataCell(
-                              'Invoice',
-                              invoiceNumber,
-                            ),
+                            child: _buildDataCell('Invoice', invoiceNumber),
                           ),
                           const SizedBox(width: 6),
                           Expanded(

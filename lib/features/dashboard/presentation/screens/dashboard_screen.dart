@@ -745,9 +745,7 @@ class _ExpiringItemCard extends StatelessWidget {
                           Icon(
                             LucideIcons.store,
                             size: 11,
-                            color: AppColors.textPrimary.withValues(
-                              alpha: 0.5,
-                            ),
+                            color: AppColors.textPrimary.withValues(alpha: 0.5),
                           ),
                           const SizedBox(width: 5),
                           Expanded(
@@ -792,7 +790,6 @@ class _ExpiringItemCard extends StatelessWidget {
       ),
     );
   }
-
 }
 
 class _DashboardMetrics {

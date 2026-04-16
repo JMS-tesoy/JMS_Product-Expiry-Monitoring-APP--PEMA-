@@ -32,13 +32,19 @@ class AppTheme {
       cardTheme: CardThemeData(
         color: AppColors.cardDark,
         elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       textTheme: const TextTheme(
-        displayLarge: TextStyle(color: AppColors.textPrimary, fontSize: 32, fontWeight: FontWeight.bold),
-        titleLarge: TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.w600),
+        displayLarge: TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+        ),
+        titleLarge: TextStyle(
+          color: AppColors.textPrimary,
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+        ),
         bodyLarge: TextStyle(color: AppColors.textPrimary, fontSize: 16),
         bodyMedium: TextStyle(color: AppColors.textSecondary, fontSize: 14),
         labelSmall: TextStyle(color: AppColors.textMuted, fontSize: 12),

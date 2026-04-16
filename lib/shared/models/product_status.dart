@@ -1,9 +1,4 @@
-enum ProductStatus {
-  safe,
-  warning,
-  critical,
-  expired,
-}
+enum ProductStatus { safe, warning, critical, expired }
 
 extension ProductStatusExtension on ProductStatus {
   String get displayName {

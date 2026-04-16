@@ -14,10 +14,7 @@ enum _AlertFilter { all, critical, warning }
 class AlertsScreen extends StatefulWidget {
   final AlertsScreenFilter initialFilter;
 
-  const AlertsScreen({
-    super.key,
-    this.initialFilter = AlertsScreenFilter.all,
-  });
+  const AlertsScreen({super.key, this.initialFilter = AlertsScreenFilter.all});
 
   @override
   State<AlertsScreen> createState() => _AlertsScreenState();
