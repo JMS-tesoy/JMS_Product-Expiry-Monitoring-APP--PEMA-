@@ -582,14 +582,21 @@ class _ExpiringItemCard extends StatelessWidget {
 
   const _ExpiringItemCard({required this.product});
 
+  String _getInvoiceNumber() {
+    final value = product.batchNumber.trim();
+    if (value.length <= 5) return value;
+    return value.substring(value.length - 5);
+  }
+
   @override
   Widget build(BuildContext context) {
     final daysLeft = product.daysUntilExpiry;
     final statusColor = _statusColorFor(product.status);
     final statusLabel = product.status.displayName;
+    final invoiceNumber = _getInvoiceNumber();
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
@@ -606,104 +613,118 @@ class _ExpiringItemCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ProductThumbnail(
-            product: product,
-            size: 76,
-            borderRadius: 18,
-            fallbackColor: statusColor,
-            iconSize: 36,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final thumbnailWidth = constraints.maxWidth / 3;
+
+          return SizedBox(
+            height: 84,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        product.name,
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: statusColor.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(
-                        statusLabel,
-                        style: TextStyle(
-                          color: statusColor,
-                          fontSize: 9,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.4,
-                        ),
-                      ),
-                    ),
-                  ],
+                SizedBox(
+                  width: thumbnailWidth,
+                  child: ProductThumbnailPanel(
+                    product: product,
+                    fallbackColor: statusColor,
+                  ),
                 ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(
-                      LucideIcons.store,
-                      size: 11,
-                      color: AppColors.textPrimary.withValues(alpha: 0.5),
-                    ),
-                    const SizedBox(width: 5),
-                    Expanded(
-                      child: Text(
-                        product.outletName,
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 11,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              product.name,
+                              style: const TextStyle(
+                                color: AppColors.textPrimary,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: statusColor.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              statusLabel,
+                              style: TextStyle(
+                                color: statusColor,
+                                fontSize: 8,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _InfoPill(
-                        label: 'Batch',
-                        value: product.batchNumber,
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Icon(
+                            LucideIcons.store,
+                            size: 11,
+                            color: AppColors.textPrimary.withValues(
+                              alpha: 0.5,
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          Expanded(
+                            child: Text(
+                              product.outletName,
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 11,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _InfoPill(
-                        label: 'Window',
-                        value: _formatWindowText(daysLeft),
-                        valueColor: statusColor,
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _InfoPill(
+                              label: 'Invoice',
+                              value: invoiceNumber,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: _InfoPill(
+                              label: 'Window',
+                              value: _formatWindowText(daysLeft),
+                              valueColor: statusColor,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
+
 }
 
 class _DashboardMetrics {
@@ -827,7 +848,7 @@ class _InfoPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       decoration: BoxDecoration(
         color: AppColors.backgroundDark,
         borderRadius: BorderRadius.circular(10),
@@ -842,16 +863,19 @@ class _InfoPill extends StatelessWidget {
               color: AppColors.textPrimary.withValues(alpha: 0.42),
               fontSize: 8,
               fontWeight: FontWeight.w700,
-              letterSpacing: 0.5,
+              letterSpacing: 0,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 1),
           Text(
             value,
             style: TextStyle(
               color: valueColor ?? AppColors.textPrimary,
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: FontWeight.w600,
+              fontFamily: label == 'Invoice' ? 'monospace' : null,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

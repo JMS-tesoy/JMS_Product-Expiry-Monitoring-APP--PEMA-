@@ -22,13 +22,6 @@ class ProductThumbnail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = product.thumbnailUrl;
-    final fallbackIcon = Icon(
-      LucideIcons.package,
-      size: iconSize,
-      color: fallbackColor,
-    );
-
     return Container(
       width: size,
       height: size,
@@ -37,23 +30,124 @@ class ProductThumbnail extends StatelessWidget {
         color: fallbackColor.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(borderRadius),
       ),
-      child: imageUrl == null
-          ? fallbackIcon
-          : ColoredBox(
-              color: Colors.white,
-              child: Padding(
-                padding: const EdgeInsets.all(3),
-                child: Image.network(
-                  imageUrl,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) => fallbackIcon,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return fallbackIcon;
-                  },
-                ),
-              ),
-            ),
+      child: ColoredBox(
+        color: Colors.white,
+        child: _PrecachedThumbnailImage(
+          product: product,
+          fallbackColor: fallbackColor,
+          iconSize: iconSize,
+          padding: const EdgeInsets.all(3),
+        ),
+      ),
+    );
+  }
+}
+
+class ProductThumbnailPanel extends StatelessWidget {
+  final ProductModel product;
+  final double borderRadius;
+  final Color fallbackColor;
+  final double iconSize;
+
+  const ProductThumbnailPanel({
+    super.key,
+    required this.product,
+    required this.fallbackColor,
+    this.borderRadius = 14,
+    this.iconSize = 28,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(borderRadius),
+      ),
+      child: _PrecachedThumbnailImage(
+        product: product,
+        fallbackColor: fallbackColor,
+        iconSize: iconSize,
+      ),
+    );
+  }
+}
+
+class _PrecachedThumbnailImage extends StatefulWidget {
+  final ProductModel product;
+  final Color fallbackColor;
+  final double iconSize;
+  final EdgeInsetsGeometry padding;
+
+  const _PrecachedThumbnailImage({
+    required this.product,
+    required this.fallbackColor,
+    required this.iconSize,
+    this.padding = EdgeInsets.zero,
+  });
+
+  @override
+  State<_PrecachedThumbnailImage> createState() =>
+      _PrecachedThumbnailImageState();
+}
+
+class _PrecachedThumbnailImageState extends State<_PrecachedThumbnailImage> {
+  String? _imageUrl;
+  NetworkImage? _imageProvider;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncImageProvider();
+  }
+
+  @override
+  void didUpdateWidget(covariant _PrecachedThumbnailImage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.product.name != widget.product.name) {
+      _syncImageProvider();
+    }
+  }
+
+  void _syncImageProvider() {
+    final nextImageUrl = widget.product.thumbnailUrl;
+    if (nextImageUrl == _imageUrl) return;
+
+    _imageUrl = nextImageUrl;
+    _imageProvider = nextImageUrl == null ? null : NetworkImage(nextImageUrl);
+
+    final imageProvider = _imageProvider;
+    if (imageProvider != null) {
+      precacheImage(imageProvider, context).catchError((_) {});
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final fallbackIcon = Center(
+      child: Icon(
+        LucideIcons.package,
+        size: widget.iconSize,
+        color: widget.fallbackColor,
+      ),
+    );
+    final imageProvider = _imageProvider;
+
+    if (imageProvider == null) return fallbackIcon;
+
+    return Padding(
+      padding: widget.padding,
+      child: Image(
+        image: imageProvider,
+        fit: BoxFit.contain,
+        gaplessPlayback: true,
+        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+          if (wasSynchronouslyLoaded || frame != null) return child;
+          return fallbackIcon;
+        },
+        errorBuilder: (context, error, stackTrace) => fallbackIcon,
+      ),
     );
   }
 }

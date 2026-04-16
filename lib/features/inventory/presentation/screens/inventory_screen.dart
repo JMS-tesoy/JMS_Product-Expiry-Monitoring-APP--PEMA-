@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../app/supabase/supabase_bootstrap.dart';
 import '../../../../app/theme/app_colors.dart';
-import '../../../../shared/data/product_images.dart';
 import '../../../../shared/data/product_repository.dart';
 import '../../../../shared/models/product_model.dart';
 import '../../../../shared/models/product_status.dart';
+import '../../../../shared/widgets/product_thumbnail.dart';
 
 enum InventoryScreenFilter { all, critical, warning, safe }
 
@@ -584,7 +584,7 @@ class _ProductCard extends StatelessWidget {
     final invoiceNumber = _getInvoiceNumber();
 
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
@@ -612,7 +612,10 @@ class _ProductCard extends StatelessWidget {
               children: [
                 SizedBox(
                   width: thumbnailWidth,
-                  child: _buildThumbnailPanel(statusColor),
+                  child: ProductThumbnailPanel(
+                    product: product,
+                    fallbackColor: statusColor,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -690,37 +693,6 @@ class _ProductCard extends StatelessWidget {
           );
         },
       ),
-    );
-  }
-
-  Widget _buildThumbnailPanel(Color statusColor) {
-    final imageUrl = product.thumbnailUrl;
-    final fallbackIcon = Icon(
-      LucideIcons.package,
-      size: 28,
-      color: statusColor,
-    );
-
-    return Container(
-      clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: imageUrl == null
-          ? Center(child: fallbackIcon)
-          : Image.network(
-              imageUrl,
-              width: double.infinity,
-              height: double.infinity,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) =>
-                  Center(child: fallbackIcon),
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return Center(child: fallbackIcon);
-              },
-            ),
     );
   }
 
