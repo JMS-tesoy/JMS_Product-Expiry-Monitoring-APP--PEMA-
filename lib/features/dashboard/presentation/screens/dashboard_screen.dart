@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../../app/theme/app_colors.dart';
-import '../../../alerts/presentation/screens/alerts_screen.dart';
+import '../../../calendar/presentation/screens/calendar_screen.dart';
 import '../../../delivery/presentation/screens/delivery_screen.dart';
 import '../../../inventory/presentation/screens/inventory_screen.dart';
 import '../../../outlets/presentation/screens/outlets_screen.dart';
@@ -48,20 +48,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     ).push(MaterialPageRoute(builder: (_) => const OutletsScreen()));
   }
 
-  void _openAlerts({
-    AlertsScreenFilter initialFilter = AlertsScreenFilter.all,
-  }) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => AlertsScreen(initialFilter: initialFilter),
-      ),
-    );
-  }
-
   void _openDelivery() {
     Navigator.of(
       context,
     ).push(MaterialPageRoute(builder: (_) => const DeliveryScreen()));
+  }
+
+  void _openCalendar() {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const CalendarScreen()));
   }
 
   @override
@@ -86,10 +82,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 onTapUrgent: () => _openInventory(
                   initialFilter: InventoryScreenFilter.critical,
                 ),
-                onTapCritical: () =>
-                    _openAlerts(initialFilter: AlertsScreenFilter.critical),
                 onTapDelivery: _openDelivery,
-                onTapThisWeek: () => _openInventory(expiringWithinDays: 7),
+                onTapCalendar: _openCalendar,
               ),
               const SizedBox(height: 10),
               _DashboardSectionHeader(
@@ -331,90 +325,99 @@ class _GridStats extends StatelessWidget {
   final VoidCallback onTapTotalItems;
   final VoidCallback onTapOutlets;
   final VoidCallback onTapUrgent;
-  final VoidCallback onTapCritical;
   final VoidCallback onTapDelivery;
-  final VoidCallback onTapThisWeek;
+  final VoidCallback onTapCalendar;
 
   const _GridStats({
     required this.metrics,
     required this.onTapTotalItems,
     required this.onTapOutlets,
     required this.onTapUrgent,
-    required this.onTapCritical,
     required this.onTapDelivery,
-    required this.onTapThisWeek,
+    required this.onTapCalendar,
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Row(
+      child: Column(
         children: [
-          Expanded(
-            child: Column(
-              children: [
-                _StatCard(
+          Row(
+            children: [
+              Expanded(
+                child: _StatCard(
                   title: 'Total Items',
                   value: _formatCount(metrics.totalQuantity),
                   icon: LucideIcons.package,
                   iconColor: AppColors.primaryTeal,
                   onTap: onTapTotalItems,
                 ),
-                const SizedBox(height: 10),
-                _StatCard(
-                  title: 'Critical',
-                  value: metrics.criticalCount.toString(),
-                  icon: LucideIcons.alertTriangle,
-                  iconColor: AppColors.statusCritical,
-                  onTap: onTapCritical,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              children: [
-                _StatCard(
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _StatCard(
                   title: 'Outlets',
                   value: metrics.outletCount.toString(),
                   icon: LucideIcons.store,
                   iconColor: AppColors.primaryTeal,
                   onTap: onTapOutlets,
                 ),
-                const SizedBox(height: 10),
-                _StatCard(
-                  title: 'Delivery',
-                  value: '0',
-                  icon: LucideIcons.truck,
-                  iconColor: AppColors.primaryTeal,
-                  onTap: onTapDelivery,
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              children: [
-                _StatCard(
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _StatCard(
                   title: 'Urgent',
                   value: metrics.urgentCount.toString(),
                   icon: LucideIcons.zap,
                   iconColor: AppColors.statusWarning,
                   onTap: onTapUrgent,
                 ),
-                const SizedBox(height: 10),
-                _StatCard(
-                  title: 'This Week',
-                  value: metrics.thisWeekCount.toString(),
-                  icon: LucideIcons.clock,
-                  iconColor: AppColors.statusWarning,
-                  onTap: onTapThisWeek,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _StatCard(
+                  title: 'Delivery',
+                  value: '0',
+                  icon: LucideIcons.truck,
+                  iconColor: AppColors.primaryTeal,
+                  onTap: onTapDelivery,
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              const Expanded(
+                child: _ActionSmallCard(
+                  title: 'Chat Customer',
+                  icon: LucideIcons.messageCircle,
+                  iconColor: AppColors.primaryTeal,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: _ActionSmallCard(
+                  title: 'Customer Profile',
+                  icon: LucideIcons.fileText,
+                  iconColor: AppColors.primaryTeal,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _ActionSmallCard(
+                  title: 'Calendar',
+                  icon: LucideIcons.calendarDays,
+                  iconColor: AppColors.statusWarning,
+                  onTap: onTapCalendar,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -510,6 +513,71 @@ class _StatCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionSmallCard extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final Color iconColor;
+  final VoidCallback? onTap;
+
+  const _ActionSmallCard({
+    required this.title,
+    required this.icon,
+    required this.iconColor,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return NeumorphicCard(
+      onTap: onTap,
+      padding: EdgeInsets.zero,
+      child: SizedBox(
+        height: 58,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.cardElevated.withValues(alpha: 0.95),
+                AppColors.cardDark,
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Icon(icon, size: 14, color: iconColor),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -766,7 +834,10 @@ class _DashboardMetrics {
         .where((product) => product.status == ProductStatus.critical)
         .toList();
     final thisWeekProducts = sortedProducts
-        .where((product) => product.daysUntilExpiry <= 7)
+        .where(
+          (product) =>
+              product.daysUntilExpiry >= 0 && product.daysUntilExpiry <= 7,
+        )
         .toList();
 
     return _DashboardMetrics(

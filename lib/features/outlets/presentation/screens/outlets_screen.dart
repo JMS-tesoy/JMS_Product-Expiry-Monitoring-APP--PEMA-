@@ -568,6 +568,8 @@ class _OutletCard extends StatelessWidget {
                           ),
                         ],
                       ),
+                      const SizedBox(height: 8),
+                      const _ChatCustomerPill(),
                     ],
                   ),
                 ),
@@ -621,6 +623,46 @@ class _OutletCard extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ChatCustomerPill extends StatelessWidget {
+  const _ChatCustomerPill();
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: AppColors.primaryTeal.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: AppColors.primaryTeal.withValues(alpha: 0.16),
+          ),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              LucideIcons.messageCircle,
+              size: 13,
+              color: AppColors.primaryTeal,
+            ),
+            SizedBox(width: 6),
+            Text(
+              'Chat Customer',
+              style: TextStyle(
+                color: AppColors.primaryTeal,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ],
         ),
